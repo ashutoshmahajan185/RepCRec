@@ -18,7 +18,7 @@ public class RepCRec {
 		// Modify the file path here
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_" + scanner.nextInt() + ".txt";
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_3.txt";
-		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_14.txt";
+		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_7.txt";
 		FileReader file_reader = new FileReader(file_path);
 		BufferedReader buffered_reader = new BufferedReader(file_reader);
 		// Dump for input
@@ -76,7 +76,8 @@ public class RepCRec {
 			case "BEGINRO":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(')')));
 				transaction_manager.beginTransaction(transaction_ID, timer);
-				transaction_manager.transactions.get(transaction_ID).setreadOnly();
+				transaction_manager.transactions.get(transaction_ID-1).setreadOnly();
+				transaction_manager.createSnapshot(transaction_ID-1);
 				break;
 				
 			case "R":

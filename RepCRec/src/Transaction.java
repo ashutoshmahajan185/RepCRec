@@ -8,6 +8,7 @@ public class Transaction {
 	String state; // State of the transaction: Running, Waiting, Abort, Commit
 	boolean readOnly = false;
 	ArrayList<Instruction> Instructions = new ArrayList<Instruction>();
+	ArrayList<Site> databaseSnapshot = new ArrayList<Site>();
 	
 	Transaction(int transaction_ID, int start_time) {
 		
@@ -23,4 +24,16 @@ public class Transaction {
 	public void setreadOnly() {
 		this.readOnly = true;
 	}
+	
+	public void createSnapshot(ArrayList<Site> sites) {
+		//for(Site s:sites) {
+		//	this.databaseSnapshot.add(s.clone());
+		//}
+		this.databaseSnapshot = (ArrayList<Site>) sites.clone();
+	}
+	
+	public ArrayList<Site> getSnapshot(){
+		return this.databaseSnapshot;
+	}
 }
+

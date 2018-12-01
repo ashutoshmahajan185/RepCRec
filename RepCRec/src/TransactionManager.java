@@ -30,11 +30,34 @@ public class TransactionManager {
 	  T.addInstruction(I); 
    }
    
+   public void createSnapshot(int id) {
+	   Transaction T = transactions.get(id);
+	   T.createSnapshot((ArrayList<Site>) sites.clone());
+   }
+   
    public void processInstruction(Instruction I,int transaction_id) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
-	   if (operation.equals("write")) {
-		if (requestWriteLock(I.data_item)) {
+	   if (T.readOnly) {
+		   processReadOnly(I,transaction_id);
+		
+	   }
+	   else {
+		   if (operation.equals("write")) {
+			   processWrite(I,transaction_id);
+			   }
+		   if (operation.equals("read")) {
+			   processRead(I,transaction_id);
+			   }
+		   
+	   }
+
+   }
+   
+   public void processWrite(Instruction I, int transaction_id) {
+	   String operation = I.getOperation();
+	   Transaction T = transactions.get(transaction_id);   
+	   if (requestWriteLock(I.data_item)) {
 			System.out.println("lock can be acquired");
 			if(I.data_item%2==0) {
 				for(Site s:sites) {
@@ -56,23 +79,15 @@ public class TransactionManager {
 			//add to waiting queue
 			waitingInstructions.add(I);
 		}
-	   }
-	   if (operation.equals("read")) {
-		   if (requestReadLock(I.data_item)) {
-			   System.out.println("lock can be acquired");
-			   if(I.data_item%2==0) {
-					for(Site s:sites) {
-						s.setReadLock(T, I.data_item-1);
-						for(Data data:s.data_items) {
-							if(data.data_index==I.data_item) {
-								System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
-							}
-						}
-					}
-				}
-				else {
-					int site_id = 1 + I.data_item%10;
-					Site s = sites.get(site_id-1);
+   }
+   
+   public void processRead(Instruction I, int transaction_id) {
+	   String operation = I.getOperation();
+	   Transaction T = transactions.get(transaction_id);
+	   if (requestReadLock(I.data_item)) {
+		   System.out.println("lock can be acquired");
+		   if(I.data_item%2==0) {
+				for(Site s:sites) {
 					s.setReadLock(T, I.data_item-1);
 					for(Data data:s.data_items) {
 						if(data.data_index==I.data_item) {
@@ -80,13 +95,48 @@ public class TransactionManager {
 						}
 					}
 				}
-		   }
-		   else {
-			   System.out.println("blocked");
-			   waitingInstructions.add(I);
-		   }
+			}
+			else {
+				int site_id = 1 + I.data_item%10;
+				Site s = sites.get(site_id-1);
+				s.setReadLock(T, I.data_item-1);
+				for(Data data:s.data_items) {
+					if(data.data_index==I.data_item) {
+						System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
+					}
+				}
+			}
+	   }
+	   else {
+		   System.out.println("blocked");
+		   waitingInstructions.add(I);
 	   }
    }
+   
+   public void processReadOnly(Instruction I, int transaction_id) {
+	   Transaction T = transactions.get(transaction_id);
+	   ArrayList<Site> snapshot = T.getSnapshot();
+	   if(I.data_item%2==0) {
+			for(Site s:snapshot) {
+				for(Data data:s.data_items) {
+					if(data.data_index==I.data_item) {
+						System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
+					}
+				}
+			}
+		}
+		else {
+			int site_id = 1 + I.data_item%10;
+			Site s = snapshot.get(site_id-1);
+			for(Data data:s.data_items) {
+				if(data.data_index==I.data_item) {
+					System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
+				}
+			}
+		}
+  }
+	   
+   
    
    boolean requestWriteLock(int data_item) {
 	   if(data_item%2==0) {
