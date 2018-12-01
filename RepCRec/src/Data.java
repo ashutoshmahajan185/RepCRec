@@ -5,9 +5,14 @@ public class Data {
 	int data_index;
 	int data_value;
 	
-	// Constructor for even indexed data items
+	
+	
+	// Constructor for initializing data items
 	Data(int data_index) {
+	
+		this.data_index = data_index;
 		data_value = 10 * data_index;
+	
 	}
 	
 	// Method for even indexed data item

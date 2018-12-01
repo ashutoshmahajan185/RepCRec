@@ -8,7 +8,7 @@ public class Site {
 	int site_ID = 0;
 	String state; // State of the site: Up or Down
 
-	ArrayList<Data> data_item = new ArrayList<Data>();
+	ArrayList<Data> data_items = new ArrayList<Data>();
 	
 	Site(int site_ID) {
 		
@@ -19,8 +19,16 @@ public class Site {
 	
 	void addDataItems() {
 		
+		// Adding even indexed data items
 		for(int i = 1; i <= 10; i ++) {
-			data_item.add(new Data(i * 2));
+			data_items.add(new Data(i * 2));
+		}
+		// Adding odd indexed data items
+		for(int i = 0; i < 10; i ++) {
+			if(((i * 2 + 1) % 10 + 1) == site_ID) {
+				data_items.add(new Data(i * 2 + 1));
+			}
+			
 		}
 		
 	}

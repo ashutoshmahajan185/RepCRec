@@ -42,6 +42,18 @@ public class RepCRec {
 		
 		TransactionManager transaction_manager = new TransactionManager();
 		
+		for(int i = 0; i < 10; i ++) {
+			
+			Site current_site = transaction_manager.sites.get(i);
+			System.out.print("\nSite " + current_site.site_ID);
+			System.out.println(" --> Data Items at this site: ");
+			ArrayList<Data> data_items_onsite = current_site.data_items;
+			for(int j = 0; j < data_items_onsite.size(); j ++) {
+				System.out.println("X" + data_items_onsite.get(j).data_index + ": " + data_items_onsite.get(j).data_value);
+			}
+		}
+		
+		
 		int timer = 0; // Advances with each newline or each new instruction
 		for(int i = 0; i < input.size(); i ++) {
 		
