@@ -9,11 +9,16 @@ public class Site {
 	String state; // State of the site: Up or Down
 
 	ArrayList<Data> data_items = new ArrayList<Data>();
+	Transaction[] writeLockTable = new Transaction[21];
+	ArrayList<ArrayList<Transaction>> readLockTable = new ArrayList<ArrayList<Transaction>>(21);
 	
 	Site(int site_ID) {
 		
 		this.site_ID = site_ID;
 		addDataItems();
+		for (int i=0; i<21; i++) {
+		      readLockTable.add(new ArrayList<Transaction>());
+		    }
 		
 	}
 	
@@ -36,5 +41,36 @@ public class Site {
 	void initializeSite() {
 		
 	}
-
+	
+	void setWriteLock(Transaction T,int id) {
+		writeLockTable[id] = T;
+	}
+	
+	void clearWriteLock(int id) {
+		writeLockTable[id] = null;
+	}
+	
+	void setReadLock(Transaction T, int id) {
+		readLockTable.get(id).add(T);
+	}
+    
+	void clearReadLock(Transaction T,int id) {
+	    readLockTable.get(id).remove(T);	
+	}
+	
+	boolean checkWriteLock(int id) {
+		return writeLockTable[id]==null;
+	}
+	
+	boolean checkReadLock(int id) {
+		return readLockTable.get(id).isEmpty();	
+	}
+	
+	void writeValue(int id,int value) {
+		for(Data data:data_items) {
+			if(data.data_index==id) {
+				data.setValue(value);
+			}
+		}
+	}
 }

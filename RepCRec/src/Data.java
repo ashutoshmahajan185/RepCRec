@@ -42,4 +42,11 @@ public class Data {
 	Integer x20 = 200;
 	*/
 	
+	int getIndex() {
+		return this.data_index;
+	}
+	
+	void setValue(int value) {
+		this.data_value = value;
+	}
 }

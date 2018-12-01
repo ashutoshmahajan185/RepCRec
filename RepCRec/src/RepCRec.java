@@ -17,8 +17,8 @@ public class RepCRec {
 		System.out.println("Enter the test_script name/number");
 		// Modify the file path here
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_" + scanner.nextInt() + ".txt";
-		String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_3.txt";
-		//String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_3.txt";
+		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_3.txt";
+		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_14.txt";
 		FileReader file_reader = new FileReader(file_path);
 		BufferedReader buffered_reader = new BufferedReader(file_reader);
 		// Dump for input
@@ -43,16 +43,16 @@ public class RepCRec {
 		
 		TransactionManager transaction_manager = new TransactionManager();
 		
-		for(int i = 0; i < 10; i ++) {
-			
-			Site current_site = transaction_manager.sites.get(i);
-			System.out.print("\nSite " + current_site.site_ID);
-			System.out.println(" --> Data Items at this site: ");
-			ArrayList<Data> data_items_onsite = current_site.data_items;
-			for(int j = 0; j < data_items_onsite.size(); j ++) {
-				System.out.println("X" + data_items_onsite.get(j).data_index + ": " + data_items_onsite.get(j).data_value);
-			}
-		}
+//		for(int i = 0; i < 10; i ++) {
+//			
+//			Site current_site = transaction_manager.sites.get(i);
+//			System.out.print("\nSite " + current_site.site_ID);
+//			System.out.println(" --> Data Items at this site: ");
+//			ArrayList<Data> data_items_onsite = current_site.data_items;
+//			for(int j = 0; j < data_items_onsite.size(); j ++) {
+//				System.out.println("X" + data_items_onsite.get(j).data_index + ": " + data_items_onsite.get(j).data_value);
+//			}
+//		}
 		
 		
 		int timer = 0; // Advances with each newline or each new instruction
@@ -76,17 +76,24 @@ public class RepCRec {
 			case "BEGINRO":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(')')));
 				transaction_manager.beginTransaction(transaction_ID, timer);
+				transaction_manager.transactions.get(transaction_ID).setreadOnly();
 				break;
 				
 			case "R":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(',')));
 				data_item = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('x') + 1, current_instruction.indexOf(')')));
+				Instruction I = new Instruction(data_item,transaction_ID);
+				transaction_manager.addInstruction(transaction_ID-1, I);
+				transaction_manager.processInstruction(I, transaction_ID-1);
 				break;
 				
 			case "W":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(',')));
 				data_item = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('x') + 1, current_instruction.lastIndexOf(',')));
 				write_value = Integer.parseInt(current_instruction.substring(current_instruction.lastIndexOf(',') + 1, current_instruction.lastIndexOf(')')));
+				Instruction I_write = new Instruction(data_item,transaction_ID,write_value);
+				transaction_manager.addInstruction(transaction_ID-1, I_write);
+				transaction_manager.processInstruction(I_write,transaction_ID-1);
 				break;
 				
 			case "FAIL":
@@ -99,6 +106,7 @@ public class RepCRec {
 				
 			case "END":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(')')));
+				transaction_manager.endTransaction(transaction_ID-1);
 				break;
 				
 			case "DUMP":
@@ -110,16 +118,28 @@ public class RepCRec {
 				break;
 			
 			}
+			//System.out.println(transaction_manager.transactions);
 			
-			System.out.println("Operation: " + operation);
-			System.out.println("Transaction: " + transaction_ID);
-			System.out.println("Data Item: " + data_item);
-			System.out.println("Site: " + site_ID);
+			System.out.println("Operation: " + operation+ " Transaction: T"+ transaction_ID);
+			//System.out.println("Transaction: " + transaction_ID);
+			//System.out.println("Data Item: " + data_item);
+			//System.out.println("Site: " + site_ID);
+			
 			
 		}
+//		for(int i = 0; i < 10; i ++) {
+//			
+//			Site current_site = transaction_manager.sites.get(i);
+//			System.out.print("\nSite " + current_site.site_ID);
+//			System.out.println(" --> Data Items at this site: ");
+//			ArrayList<Data> data_items_onsite = current_site.data_items;
+//			for(int j = 0; j < data_items_onsite.size(); j ++) {
+//				System.out.println("X" + data_items_onsite.get(j).data_index + ": " + data_items_onsite.get(j).data_value);
+//			}
+//		}
 		
 		
-
+		//System.out.println(transaction_manager.sites);
 		scanner.close();
 		
 	}
