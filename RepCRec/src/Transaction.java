@@ -26,14 +26,14 @@ public class Transaction {
 	}
 	
 	public void createSnapshot(ArrayList<Site> sites) {
-		//for(Site s:sites) {
-		//	this.databaseSnapshot.add(s.clone());
-		//}
-		this.databaseSnapshot = (ArrayList<Site>) sites.clone();
+		for(Site s:sites) {
+			databaseSnapshot.add(s.clone());
+		}
+		//this.databaseSnapshot = (ArrayList<Site>) sites.clone();
 	}
 	
 	public ArrayList<Site> getSnapshot(){
-		return this.databaseSnapshot;
+		return databaseSnapshot;
 	}
 }
 

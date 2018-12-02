@@ -39,7 +39,11 @@ public class Site {
 	}
 	protected Site clone() {
 		Site s = new Site(this.site_ID);
-		s.data_items = (ArrayList<Data>) this.data_items.clone();
+		//s.data_items = (ArrayList<Data>) this.data_items.clone();
+		s.data_items = new ArrayList<Data>();
+		for(Data d:data_items) {
+			s.data_items.add(d.clone());
+		}
 		return s;
 	}
 	void initializeSite() {

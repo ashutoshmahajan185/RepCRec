@@ -32,7 +32,8 @@ public class TransactionManager {
    
    public void createSnapshot(int id) {
 	   Transaction T = transactions.get(id);
-	   T.createSnapshot((ArrayList<Site>) sites.clone());
+	   ArrayList<Site> snapshot = (ArrayList<Site>) sites.clone();
+	   T.createSnapshot(snapshot);
    }
    
    public void processInstruction(Instruction I,int transaction_id) {

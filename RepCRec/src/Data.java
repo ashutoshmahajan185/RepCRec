@@ -49,4 +49,10 @@ public class Data {
 	void setValue(int value) {
 		this.data_value = value;
 	}
+	
+	protected Data clone() {
+		Data d = new Data(this.data_index);
+		d.data_value = this.data_value;
+		return d;
+	}
 }
