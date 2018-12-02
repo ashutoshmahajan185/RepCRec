@@ -18,7 +18,7 @@ public class RepCRec {
 		// Modify the file path here
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_" + scanner.nextInt() + ".txt";
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_3.txt";
-		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_8.txt";
+		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_7.txt";
 		FileReader file_reader = new FileReader(file_path);
 		BufferedReader buffered_reader = new BufferedReader(file_reader);
 		// Dump for input

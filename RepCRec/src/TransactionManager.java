@@ -58,7 +58,7 @@ public class TransactionManager {
    public void processWrite(Instruction I, int transaction_id) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);   
-	   if (requestWriteLock(I.data_item)) {
+	   if (requestWriteLock(I.data_item,I)) {
 			System.out.println("lock can be acquired");
 			if(I.data_item%2==0) {
 				for(Site s:sites) {
@@ -85,7 +85,7 @@ public class TransactionManager {
    public void processRead(Instruction I, int transaction_id) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
-	   if (requestReadLock(I.data_item)) {
+	   if (requestReadLock(I.data_item,I)) {
 		   System.out.println("lock can be acquired");
 		   if(I.data_item%2==0) {
 				for(Site s:sites) {
@@ -139,18 +139,28 @@ public class TransactionManager {
 	   
    
    
-   boolean requestWriteLock(int data_item) {
+   boolean requestWriteLock(int data_item,Instruction I) {
 	   if(data_item%2==0) {
+		   int countTrues = 0;
+		   int countFalses = 0;
 		   for(Site s:sites) {
+			    if(s.checkWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
+			    	countTrues++;
+			    }
 				if (!s.checkWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
-					return false;
+					countFalses++;
 				}
-				
+
 		   }
+			if(countTrues==sites.size()) return true;
+			if(countFalses>0) return false;
 	   }
 	   else {
 		   int site_id = 1 + data_item%10;
 		   Site s = sites.get(site_id-1);
+		   if(s.checkWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
+		    	return true;
+		    }
 		   if (!s.checkWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
 			   return false;
 		   }
@@ -159,17 +169,27 @@ public class TransactionManager {
 	   return true;
    }
    
-   boolean requestReadLock(int data_item) {
+   boolean requestReadLock(int data_item,Instruction I) {
 	   if (data_item%2==0) {
+		   int countTrues = 0;
+		   int countFalses = 0;
 		   for (Site s: sites) {
+			   if(!s.checkWriteLock(data_item-1) && s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
+				   countTrues++;
+			   }
 			   if (!s.checkWriteLock(data_item-1)) {
-				   return false;
+				   countFalses++;
 			   }
 		   }
+		   if(countTrues==sites.size()) return true;
+		   if(countFalses>0) return false;
 	   }
 	   else {
 		   int site_id = 1 + data_item%10;
 		   Site s = sites.get(site_id-1);
+		   if(s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
+			   return true;
+		   }
 		   if (!s.checkWriteLock(data_item-1)) {
 			   return false;
 		   }
