@@ -16,6 +16,7 @@ public class Site {
 		
 		this.site_ID = site_ID;
 		addDataItems();
+		this.state = "up";
 		for (int i=0; i<21; i++) {
 		      readLockTable.add(new ArrayList<Transaction>());
 		    }
@@ -50,8 +51,39 @@ public class Site {
 		
 	}
 	
+	boolean isSiteUp() {
+		return this.state.equals("up");
+	}
+	
+	void failSite() {
+		this.state = "down";
+		resetReadLockTable();
+		resetWriteLockTable();
+	}
+	
+	void recoverSite() {
+		this.state = "up";
+		resetReadLockTable();
+		resetWriteLockTable();
+	}
+	
+	void resetReadLockTable() {
+		this.readLockTable.clear();
+		for (int i=0; i<21; i++) {
+		      this.readLockTable.add(new ArrayList<Transaction>());
+		    }
+	}
+	
+	void resetWriteLockTable() {
+		this.writeLockTable = new Transaction[21];
+	}
+	
 	void setWriteLock(Transaction T,int id) {
 		writeLockTable[id] = T;
+	}
+	
+	boolean checkWriteLock(Transaction T, int id) {
+		return writeLockTable[id]==T;
 	}
 	
 	void clearWriteLock(int id) {
@@ -63,10 +95,14 @@ public class Site {
 	}
     
 	void clearReadLock(Transaction T,int id) {
-	    readLockTable.get(id).remove(T);	
+	    readLockTable.get(id).remove(T);
 	}
 	
-	boolean checkWriteLock(int id) {
+	boolean hasReadLock(Transaction T, int id) {
+		return readLockTable.get(id).contains(T);
+	}
+	
+	boolean isEmptyWriteLock(int id) {
 		return writeLockTable[id]==null;
 	}
 	

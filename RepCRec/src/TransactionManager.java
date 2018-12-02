@@ -19,10 +19,16 @@ public class TransactionManager {
 		
 	}
 	
+	public void failSite(int site_id) {
+		sites.get(site_id-1).failSite();	
+	}
+	
+	public void recoverSite(int site_id) {
+		sites.get(site_id-1).recoverSite();
+	}
+	
 	public void beginTransaction(int transaction_ID, int timer) {
-		
 		transactions.add(new Transaction(transaction_ID, timer));
-		
 	}
 	
    public void addInstruction(int id,Instruction I) {
@@ -36,7 +42,7 @@ public class TransactionManager {
 	   T.createSnapshot(snapshot);
    }
    
-   public void processInstruction(Instruction I,int transaction_id) {
+   public void processInstruction(Instruction I,int transaction_id,boolean flag) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
 	   if (T.readOnly) {
@@ -44,35 +50,39 @@ public class TransactionManager {
 		
 	   }
 	   else {
+		   
+		   if(T.databaseSnapshot==null) T.storeAccessSites(sites);
+		   
 		   if (operation.equals("write")) {
-			   processWrite(I,transaction_id);
+			   processWrite(I,transaction_id,flag);
 			   }
 		   if (operation.equals("read")) {
-			   processRead(I,transaction_id);
+			   processRead(I,transaction_id,flag);
 			   }
 		   
 	   }
 
    }
    
-   public void processWrite(Instruction I, int transaction_id) {
+   public void processWrite(Instruction I, int transaction_id,boolean flag) {
 	   String operation = I.getOperation();
-	   Transaction T = transactions.get(transaction_id);   
-	   if (requestWriteLock(I.data_item,I)) {
+	   Transaction T = transactions.get(transaction_id);  
+	   ArrayList<Site> accessedSites = T.getSnapshot();
+	   if (requestWriteLock(I.data_item,I,flag,accessedSites)) {
 			System.out.println("lock can be acquired");
 			if(I.data_item%2==0) {
-				for(Site s:sites) {
+				for(Site s:accessedSites) {
 					s.setWriteLock(T, I.data_item-1);
-					s.writeValue(I.data_item, I.write_value);
-					System.out.println("wrote value "+I.write_value+" at site : "+ s.site_ID);
 				}
 			}
 			else {
 				int site_id = 1 + I.data_item%10;
 				Site s = sites.get(site_id-1);
-				s.setWriteLock(T, I.data_item-1);
-				s.writeValue(I.data_item, I.write_value);
-				System.out.println("wrote value "+I.write_value+" at site : "+ s.site_ID);
+				int actualSiteIndex = accessedSites.indexOf(s);
+				if(actualSiteIndex!=-1) {
+					Site actualSite = accessedSites.get(actualSiteIndex);
+				    actualSite.setWriteLock(T, I.data_item-1);
+				}
 			}
 		}
 		else {
@@ -82,29 +92,24 @@ public class TransactionManager {
 		}
    }
    
-   public void processRead(Instruction I, int transaction_id) {
+   public void processRead(Instruction I, int transaction_id,boolean flag) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
-	   if (requestReadLock(I.data_item,I)) {
+	   ArrayList<Site> accessedSites = T.getSnapshot();
+	   if (requestReadLock(I.data_item,I,flag,accessedSites)) {
 		   System.out.println("lock can be acquired");
 		   if(I.data_item%2==0) {
-				for(Site s:sites) {
+				for(Site s:accessedSites) {
 					s.setReadLock(T, I.data_item-1);
-					for(Data data:s.data_items) {
-						if(data.data_index==I.data_item) {
-							System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
-						}
-					}
 				}
 			}
 			else {
 				int site_id = 1 + I.data_item%10;
 				Site s = sites.get(site_id-1);
-				s.setReadLock(T, I.data_item-1);
-				for(Data data:s.data_items) {
-					if(data.data_index==I.data_item) {
-						System.out.println("Site: "+s.site_ID+" data: "+data.data_value);
-					}
+				int actualSiteIndex = accessedSites.indexOf(s);
+				if(actualSiteIndex!=-1) {
+					Site actualSite = accessedSites.get(actualSiteIndex);
+				    actualSite.setReadLock(T, I.data_item-1);
 				}
 			}
 	   }
@@ -139,15 +144,16 @@ public class TransactionManager {
 	   
    
    
-   boolean requestWriteLock(int data_item,Instruction I) {
+   boolean requestWriteLock(int data_item,Instruction I,boolean flag, ArrayList<Site> sites) {
+	   if(!flag && waitingInstructions.size()>0 && waitingInstructions.peek().data_item==data_item) return false;
 	   if(data_item%2==0) {
 		   int countTrues = 0;
 		   int countFalses = 0;
 		   for(Site s:sites) {
-			    if(s.checkWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
+			    if(s.isEmptyWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
 			    	countTrues++;
 			    }
-				if (!s.checkWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
+				if (!s.isEmptyWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
 					countFalses++;
 				}
 
@@ -158,10 +164,10 @@ public class TransactionManager {
 	   else {
 		   int site_id = 1 + data_item%10;
 		   Site s = sites.get(site_id-1);
-		   if(s.checkWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
+		   if(!s.isEmptyWriteLock(data_item-1) && s.readLockTable.get(data_item-1).size()==1 && s.readLockTable.get(data_item-1).get(0).transaction_ID==I.transaction_id) {
 		    	return true;
 		    }
-		   if (!s.checkWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
+		   if (!s.isEmptyWriteLock(data_item-1) || !s.checkReadLock(data_item-1)) {
 			   return false;
 		   }
 	   }
@@ -169,15 +175,16 @@ public class TransactionManager {
 	   return true;
    }
    
-   boolean requestReadLock(int data_item,Instruction I) {
+   boolean requestReadLock(int data_item,Instruction I,boolean flag, ArrayList<Site> sites) {
+	   if(!flag && waitingInstructions.size()>0 && waitingInstructions.peek().data_item==data_item) return false;
 	   if (data_item%2==0) {
 		   int countTrues = 0;
 		   int countFalses = 0;
 		   for (Site s: sites) {
-			   if(!s.checkWriteLock(data_item-1) && s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
+			   if(!s.isEmptyWriteLock(data_item-1) && s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
 				   countTrues++;
 			   }
-			   if (!s.checkWriteLock(data_item-1)) {
+			   if (!s.isEmptyWriteLock(data_item-1)) {
 				   countFalses++;
 			   }
 		   }
@@ -187,10 +194,10 @@ public class TransactionManager {
 	   else {
 		   int site_id = 1 + data_item%10;
 		   Site s = sites.get(site_id-1);
-		   if(s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
+		   if(!s.isEmptyWriteLock(data_item-1) && s.writeLockTable[I.data_item-1].transaction_ID==I.transaction_id) {
 			   return true;
 		   }
-		   if (!s.checkWriteLock(data_item-1)) {
+		   if (!s.isEmptyWriteLock(data_item-1)) {
 			   return false;
 		   }
 	   }
@@ -199,36 +206,61 @@ public class TransactionManager {
   
  void endTransaction(int transaction_id) {
 	 Transaction T = transactions.get(transaction_id);
+	 ArrayList<Site> accessedSites = T.getSnapshot();
+	 boolean flag = true;
 	 for(Instruction I:T.Instructions) {
 		 if(I.operation.equals("write")) {
 			 if(I.data_item%2==0) {
-				 for(Site s:sites) {
-					 s.clearWriteLock(I.data_item-1);
+				 for(Site s:accessedSites) {
+					 if(!(s.isSiteUp() && s.checkWriteLock(T, I.data_item-1))) {
+						 flag = false;
+						 break;
+					 } 
 				 }
 			 }
 			 else {
 				 int site_id = 1 + I.data_item%10;
 				   Site s = sites.get(site_id-1);
-				   s.clearWriteLock(I.data_item-1);
+				   if(!(s.isSiteUp() && accessedSites.contains(s) && s.checkWriteLock(T, I.data_item-1))) {
+					   flag = false;
+					   break;
+					 }
 			 }
 		 }
 		 if(I.operation.equals("read")) {
 			 if(I.data_item%2==0) {
-				 for(Site s:sites) {
-					 s.clearReadLock(T,I.data_item-1);
+				 for(Site s:accessedSites) {
+					 if(!(s.isSiteUp() && s.hasReadLock(T,I.data_item-1))) {
+						 flag = false;
+						 break;
+					 }
 				 }
 			 }
 			 else {
 				 int site_id = 1 + I.data_item%10;
 				   Site s = sites.get(site_id-1);
-				   s.clearReadLock(T,I.data_item-1);
+				   if(!(s.isSiteUp() && accessedSites.contains(s) && s.hasReadLock(T,I.data_item-1))) {
+						 flag = false;
+						 break;
+					 }
 			 }
 		 }
 	 }
-	 System.out.println("T"+T.transaction_ID+" commits");
+	
+	 if(flag) {
+		 System.out.println("T"+T.transaction_ID+" commits");
+		 T.commitInstructions(accessedSites);
+		 T.releaseLocks(accessedSites);
+	 }
+	 else {
+		 System.out.println("T"+T.transaction_ID+" aborts");
+		 waitingInstructions.remove(T);
+		 T.releaseLocks(accessedSites);
+	 }
+	 
 	 Instruction I = waitingInstructions.poll();
 	 if(I!=null) {
-		 processInstruction(I,I.transaction_id-1);
+		 processInstruction(I,I.transaction_id-1,true);
 	 }
  }
  

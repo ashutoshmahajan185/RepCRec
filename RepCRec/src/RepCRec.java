@@ -18,7 +18,7 @@ public class RepCRec {
 		// Modify the file path here
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_" + scanner.nextInt() + ".txt";
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_3.txt";
-		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_7.txt";
+		String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scripts/test_script_6.txt";
 		FileReader file_reader = new FileReader(file_path);
 		BufferedReader buffered_reader = new BufferedReader(file_reader);
 		// Dump for input
@@ -85,7 +85,7 @@ public class RepCRec {
 				data_item = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('x') + 1, current_instruction.indexOf(')')));
 				Instruction I = new Instruction(data_item,transaction_ID);
 				transaction_manager.addInstruction(transaction_ID-1, I);
-				transaction_manager.processInstruction(I, transaction_ID-1);
+				transaction_manager.processInstruction(I, transaction_ID-1, false);
 				break;
 				
 			case "W":
@@ -94,15 +94,17 @@ public class RepCRec {
 				write_value = Integer.parseInt(current_instruction.substring(current_instruction.lastIndexOf(',') + 1, current_instruction.lastIndexOf(')')));
 				Instruction I_write = new Instruction(data_item,transaction_ID,write_value);
 				transaction_manager.addInstruction(transaction_ID-1, I_write);
-				transaction_manager.processInstruction(I_write,transaction_ID-1);
+				transaction_manager.processInstruction(I_write,transaction_ID-1,false);
 				break;
 				
 			case "FAIL":
 				site_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('(') + 1, current_instruction.indexOf(')')));
+				transaction_manager.failSite(site_ID);
 				break;
 				
 			case "RECOVER":
 				site_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('(') + 1, current_instruction.indexOf(')')));
+				transaction_manager.recoverSite(site_ID);
 				break;
 				
 			case "END":
@@ -140,7 +142,7 @@ public class RepCRec {
 //		}
 		
 		
-		System.out.println(transaction_manager.sites);
+		//System.out.println(transaction_manager.sites);
 		scanner.close();
 		
 	}
