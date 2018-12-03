@@ -66,8 +66,10 @@ public class TransactionManager {
    
    public void processWrite(Instruction I, int transaction_id,boolean flag) {
 	   String operation = I.getOperation();
-	   Transaction T = transactions.get(transaction_id);  
-	   ArrayList<Site> accessedSites = T.getSnapshot();
+	   Transaction T = transactions.get(transaction_id); 
+	   T.storeAccessSites(sites);
+	   T.addSitesToInstruction(I);
+	   ArrayList<Site> accessedSites = I.getAccessSites();
 	   if (requestWriteLock(I.data_item,I,flag,accessedSites)) {
 			System.out.println("lock can be acquired");
 			if(I.data_item%2==0) {
@@ -83,6 +85,7 @@ public class TransactionManager {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 				    actualSite.setWriteLock(T, I.data_item-1);
 				}
+				//else add to waiting maybe
 			}
 		}
 		else {
@@ -95,7 +98,9 @@ public class TransactionManager {
    public void processRead(Instruction I, int transaction_id,boolean flag) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
-	   ArrayList<Site> accessedSites = T.getSnapshot();
+	   T.storeAccessSites(sites);
+	   T.addSitesToInstruction(I);
+	   ArrayList<Site> accessedSites = I.getAccessSites();
 	   if (requestReadLock(I.data_item,I,flag,accessedSites)) {
 		   System.out.println("lock can be acquired");
 		   if(I.data_item%2==0) {
@@ -111,6 +116,7 @@ public class TransactionManager {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 				    actualSite.setReadLock(T, I.data_item-1);
 				}
+				//else add to waiting maybe
 			}
 	   }
 	   else {
@@ -142,10 +148,15 @@ public class TransactionManager {
 		}
   }
 	   
-   
+   boolean isAlreadyWaitingInstruction(Instruction I) {
+	   for(Instruction W:waitingInstructions) {
+		   if(W.data_item==I.data_item) return true;
+	   }
+	   return false;
+   }
    
    boolean requestWriteLock(int data_item,Instruction I,boolean flag, ArrayList<Site> sites) {
-	   if(!flag && waitingInstructions.size()>0 && waitingInstructions.peek().data_item==data_item) return false;
+	   if(!flag && waitingInstructions.size()>0 && isAlreadyWaitingInstruction(I)) return false;
 	   if(data_item%2==0) {
 		   int countTrues = 0;
 		   int countFalses = 0;
@@ -176,7 +187,7 @@ public class TransactionManager {
    }
    
    boolean requestReadLock(int data_item,Instruction I,boolean flag, ArrayList<Site> sites) {
-	   if(!flag && waitingInstructions.size()>0 && waitingInstructions.peek().data_item==data_item) return false;
+	   if(!flag && waitingInstructions.size()>0 && isAlreadyWaitingInstruction(I)) return false;
 	   if (data_item%2==0) {
 		   int countTrues = 0;
 		   int countFalses = 0;
@@ -206,9 +217,11 @@ public class TransactionManager {
   
  void endTransaction(int transaction_id) {
 	 Transaction T = transactions.get(transaction_id);
-	 ArrayList<Site> accessedSites = T.getSnapshot();
+	 if(T.isReadOnly()) System.out.println("T"+T.transaction_ID + " commits ");
+	 else {
 	 boolean flag = true;
 	 for(Instruction I:T.Instructions) {
+		 ArrayList<Site> accessedSites = I.getAccessSites();
 		 if(I.operation.equals("write")) {
 			 if(I.data_item%2==0) {
 				 for(Site s:accessedSites) {
@@ -249,18 +262,19 @@ public class TransactionManager {
 	
 	 if(flag) {
 		 System.out.println("T"+T.transaction_ID+" commits");
-		 T.commitInstructions(accessedSites);
-		 T.releaseLocks(accessedSites);
+		 T.commitInstructions(sites);
+		 T.releaseLocks(sites);
 	 }
 	 else {
 		 System.out.println("T"+T.transaction_ID+" aborts");
 		 waitingInstructions.remove(T);
-		 T.releaseLocks(accessedSites);
+		 T.releaseLocks(sites);
 	 }
 	 
 	 Instruction I = waitingInstructions.poll();
 	 if(I!=null) {
 		 processInstruction(I,I.transaction_id-1,true);
+	 }
 	 }
  }
  

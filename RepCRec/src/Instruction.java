@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 
 public class Instruction {
 	
@@ -6,7 +7,7 @@ public class Instruction {
 	Integer write_value; // Specifies the value to be written
 	// Integer used so that the value can be NULL for read operation and not zero
 	int transaction_id;
-	
+	ArrayList<Site> accessSites = new ArrayList<Site>();
 	// Read constructor
 	Instruction(int data_item,int transaction_id) {
 		
@@ -30,5 +31,13 @@ public class Instruction {
     
     int getdata_item() {
     	return this.data_item;
+    }
+    
+    void setAccessSites(ArrayList<Site> sites) {
+    	this.accessSites = sites;
+    }
+    
+    ArrayList<Site> getAccessSites() {
+    	return this.accessSites;
     }
 }

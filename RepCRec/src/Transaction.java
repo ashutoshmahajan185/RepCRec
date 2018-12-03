@@ -25,6 +25,10 @@ public class Transaction {
 		this.readOnly = true;
 	}
 	
+	public boolean isReadOnly() {
+		return this.readOnly;
+	}
+	
 	public void createSnapshot(ArrayList<Site> sites) {
 		this.databaseSnapshot = new ArrayList<Site>();
 		for(Site s:sites) {
@@ -41,11 +45,16 @@ public class Transaction {
 	}
 	
 	public ArrayList<Site> getSnapshot(){
-		return databaseSnapshot;
+		return this.databaseSnapshot;
 	}
 	
-	public void commitInstructions(ArrayList<Site> sites) {
+	public void addSitesToInstruction(Instruction I) {
+		I.setAccessSites(this.getSnapshot());
+	}
+	
+	public void commitInstructions(ArrayList<Site> originalSites) {
 		for(Instruction I:Instructions) {
+			ArrayList<Site> sites = I.getAccessSites();
 			 if(I.operation.equals("write")) {
 				 if(I.data_item%2==0) {
 					 for(Site s:sites) {
@@ -58,7 +67,7 @@ public class Transaction {
 				 }
 				 else {
 					 int site_id = 1 + I.data_item%10;
-					   Site s = sites.get(site_id-1);
+					   Site s = originalSites.get(site_id-1);
 					   if(s.isSiteUp() && s.checkWriteLock(this, I.data_item-1)) {
 						   s.writeValue(I.data_item, I.write_value);
 						   System.out.println("wrote value "+I.write_value+" at site : "+ s.site_ID);
@@ -80,7 +89,7 @@ public class Transaction {
 				 }
 				 else {
 					 int site_id = 1 + I.data_item%10;
-					   Site s = sites.get(site_id-1);
+					 Site s = originalSites.get(site_id-1);
 					   if(s.isSiteUp() && s.hasReadLock(this,I.data_item-1)) {
 						   for(Data data:s.data_items) {
 								if(data.data_index==I.data_item) {
@@ -94,8 +103,9 @@ public class Transaction {
 	}
 		
 	
-	public void releaseLocks(ArrayList<Site> sites) {
+	public void releaseLocks(ArrayList<Site> originalSites) {
 		for(Instruction I:Instructions) {
+			ArrayList<Site> sites = I.getAccessSites();
 			 if(I.operation.equals("write")) {
 				 if(I.data_item%2==0) {
 					 for(Site s:sites) {
@@ -107,7 +117,7 @@ public class Transaction {
 				 }
 				 else {
 					 int site_id = 1 + I.data_item%10;
-					   Site s = sites.get(site_id-1);
+					   Site s = originalSites.get(site_id-1);
 					   if(s.isSiteUp() && s.checkWriteLock(this, I.data_item-1)) {
 						    s.clearWriteLock(I.data_item-1);
 						 }
@@ -124,7 +134,7 @@ public class Transaction {
 				 }
 				 else {
 					 int site_id = 1 + I.data_item%10;
-					   Site s = sites.get(site_id-1);
+					 Site s = originalSites.get(site_id-1);
 					   if(s.isSiteUp() && s.hasReadLock(this,I.data_item-1)) {
 							 s.clearReadLock(this,I.data_item-1);
 						 }
