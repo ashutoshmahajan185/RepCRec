@@ -7,7 +7,7 @@ public class Site {
 	
 	int site_ID = 0;
 	String state; // State of the site: Up or Down
-
+	boolean canRead = true;
 	ArrayList<Data> data_items = new ArrayList<Data>();
 	Transaction[] writeLockTable = new Transaction[21];
 	ArrayList<ArrayList<Transaction>> readLockTable = new ArrayList<ArrayList<Transaction>>(21);
@@ -49,6 +49,14 @@ public class Site {
 	}
 	void initializeSite() {
 		
+	}
+	
+	void preventReads() {
+		this.canRead = false;
+	}
+	
+	void allowReads() {
+		this.canRead = true;
 	}
 	
 	boolean isSiteUp() {

@@ -8,6 +8,7 @@ public class Instruction {
 	// Integer used so that the value can be NULL for read operation and not zero
 	int transaction_id;
 	ArrayList<Site> accessSites = new ArrayList<Site>();
+	boolean checkReadPermission = false;
 	// Read constructor
 	Instruction(int data_item,int transaction_id) {
 		
@@ -40,4 +41,9 @@ public class Instruction {
     ArrayList<Site> getAccessSites() {
     	return this.accessSites;
     }
+    
+    void denyReadPermission() {
+    	this.checkReadPermission = true;
+    }
+    
 }

@@ -8,6 +8,7 @@ public class TransactionManager {
 	ArrayList<Site> sites = new ArrayList<Site>();
 	ArrayList<Transaction> transactions = new ArrayList<Transaction>();
 	LinkedList<Instruction> waitingInstructions = new LinkedList<Instruction>();
+	boolean addflagToCheckRead = false;
 	TransactionManager() {
 		initializeSites();
 	}
@@ -19,12 +20,22 @@ public class TransactionManager {
 		
 	}
 	
+	void setReadFlag() {
+		this.addflagToCheckRead = true;
+	}
+	
+	void disableReadFlag() {
+		this.addflagToCheckRead = false;
+	}
+	
 	public void failSite(int site_id) {
 		sites.get(site_id-1).failSite();	
 	}
 	
 	public void recoverSite(int site_id) {
 		sites.get(site_id-1).recoverSite();
+		sites.get(site_id-1).preventReads();
+		setReadFlag();
 	}
 	
 	public void beginTransaction(int transaction_ID, int timer) {
@@ -54,22 +65,23 @@ public class TransactionManager {
 		   if(T.databaseSnapshot==null) T.storeAccessSites(sites);
 		   
 		   if (operation.equals("write")) {
-			   processWrite(I,transaction_id,flag);
+			   processWrite(I,transaction_id,flag,addflagToCheckRead);
 			   }
 		   if (operation.equals("read")) {
-			   processRead(I,transaction_id,flag);
+			   processRead(I,transaction_id,flag,addflagToCheckRead);
 			   }
 		   
 	   }
 
    }
    
-   public void processWrite(Instruction I, int transaction_id,boolean flag) {
+   public void processWrite(Instruction I, int transaction_id,boolean flag, boolean addFlagToCheckRead) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id); 
 	   T.storeAccessSites(sites);
 	   T.addSitesToInstruction(I);
 	   ArrayList<Site> accessedSites = I.getAccessSites();
+	   if(addFlagToCheckRead) I.denyReadPermission();
 	   if (requestWriteLock(I.data_item,I,flag,accessedSites)) {
 			System.out.println("lock can be acquired");
 			if(I.data_item%2==0) {
@@ -95,12 +107,13 @@ public class TransactionManager {
 		}
    }
    
-   public void processRead(Instruction I, int transaction_id,boolean flag) {
+   public void processRead(Instruction I, int transaction_id,boolean flag, boolean addFlagToCheckRead) {
 	   String operation = I.getOperation();
 	   Transaction T = transactions.get(transaction_id);
 	   T.storeAccessSites(sites);
 	   T.addSitesToInstruction(I);
 	   ArrayList<Site> accessedSites = I.getAccessSites();
+	   if(addFlagToCheckRead) I.denyReadPermission();
 	   if (requestReadLock(I.data_item,I,flag,accessedSites)) {
 		   System.out.println("lock can be acquired");
 		   if(I.data_item%2==0) {
@@ -264,6 +277,7 @@ public class TransactionManager {
 		 System.out.println("T"+T.transaction_ID+" commits");
 		 T.commitInstructions(sites);
 		 T.releaseLocks(sites);
+		 if(T.getTMFlag()) disableReadFlag();
 	 }
 	 else {
 		 System.out.println("T"+T.transaction_ID+" aborts");
