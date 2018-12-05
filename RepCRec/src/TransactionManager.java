@@ -161,8 +161,21 @@ public class TransactionManager {
 		if (requestReadLock(I.data_item, I, flag, accessedSites)) {
 			System.out.println("lock can be acquired");
 			if (I.data_item % 2 == 0) {
-				for (Site s : accessedSites) {
-					s.setReadLock(T, I.data_item - 1);
+				if (!accessedSites.isEmpty()) {
+					for (Site s : accessedSites) {
+						if (I.checkReadPermission && !s.canRead)
+							continue;
+						s.setReadLock(T, I.data_item - 1);
+						for (Data data : s.data_items) {
+							if (data.data_index == I.data_item) {
+								System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+							}
+						}
+						break;
+					}
+				} else {
+					System.out.println("blocked");
+					waitingInstructions.add(I);
 				}
 			} else {
 				int site_id = 1 + I.data_item % 10;
@@ -171,8 +184,21 @@ public class TransactionManager {
 				if (actualSiteIndex != -1) {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 					actualSite.setReadLock(T, I.data_item - 1);
+					if (I.checkReadPermission && !s.canRead)
+						System.out.println("read not allowed");
+					else {
+						for (Data data : s.data_items) {
+							if (data.data_index == I.data_item) {
+								System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+							}
+						}
+					}
+				} else {
+					// else add to waiting maybe
+					System.out.println("blocked");
+					waitingInstructions.add(I);
 				}
-				// else add to waiting maybe
+
 			}
 		} else {
 			System.out.println("blocked");
@@ -188,20 +214,28 @@ public class TransactionManager {
 		Transaction T = transactions.get(transaction_id);
 		ArrayList<Site> snapshot = T.getSnapshot();
 		if (I.data_item % 2 == 0) {
-			for (Site s : snapshot) {
-				for (Data data : s.data_items) {
-					if (data.data_index == I.data_item) {
-						System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+			doOnce: for (Site s : snapshot) {
+				if (s.isSiteUp()) {
+					for (Data data : s.data_items) {
+						if (data.data_index == I.data_item) {
+							System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+						}
+						break doOnce;
 					}
 				}
 			}
 		} else {
 			int site_id = 1 + I.data_item % 10;
 			Site s = snapshot.get(site_id - 1);
-			for (Data data : s.data_items) {
-				if (data.data_index == I.data_item) {
-					System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+			if (s.isSiteUp()) {
+				for (Data data : s.data_items) {
+					if (data.data_index == I.data_item) {
+						System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
+					}
 				}
+			} else {
+				System.out.println("blocked");
+				waitingInstructions.add(I);
 			}
 		}
 	}
@@ -241,7 +275,7 @@ public class TransactionManager {
 				}
 
 			}
-			if (countTrues == sites.size())
+			if (countTrues == 1)
 				return true;
 			if (countFalses > 0)
 				return false;
@@ -330,11 +364,17 @@ public class TransactionManager {
 				}
 				if (I.operation.equals("read")) {
 					if (I.data_item % 2 == 0) {
+						boolean flag2 = false;
 						for (Site s : accessedSites) {
-							if (!(s.isSiteUp() && s.hasReadLock(T, I.data_item - 1))) {
-								flag = false;
-								break;
-							}
+							flag2 = flag2 || !s.isSiteUp() || !s.hasReadLock(T, I.data_item - 1);
+							// if (!(s.isSiteUp() && s.hasReadLock(T, I.data_item - 1))) {
+							// flag = false;
+							// break;
+							// }
+						}
+						if (!flag2) {
+							flag = false;
+							break;
 						}
 					} else {
 						int site_id = 1 + I.data_item % 10;

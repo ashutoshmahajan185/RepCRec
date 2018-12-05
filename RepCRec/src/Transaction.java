@@ -57,7 +57,7 @@ public class Transaction {
 	public ArrayList<Site> getSnapshot() {
 		return this.databaseSnapshot;
 	}
-
+	
 	public void addSitesToInstruction(Instruction I) {
 		I.setAccessSites(this.getSnapshot());
 	}
