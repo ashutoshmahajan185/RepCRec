@@ -167,7 +167,6 @@ public class TransactionManager {
 		if (requestReadLock(I.data_item, I, flag, accessedSites)) {
 			System.out.println("lock can be acquired");
 			graph.reverseEdge("T" + T.transaction_ID, "x" + I.data_item);
-			//System.out.println(graph);
 			if (I.data_item % 2 == 0) {
 				for (Site s : accessedSites) {
 					s.setReadLock(T, I.data_item - 1);
