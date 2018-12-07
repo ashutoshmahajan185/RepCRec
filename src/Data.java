@@ -42,4 +42,17 @@ public class Data {
 	Integer x20 = 200;
 	*/
 	
+	int getIndex() {
+		return this.data_index;
+	}
+	
+	void setValue(int value) {
+		this.data_value = value;
+	}
+	
+	protected Data clone() {
+		Data d = new Data(this.data_index);
+		d.data_value = this.data_value;
+		return d;
+	}
 }
