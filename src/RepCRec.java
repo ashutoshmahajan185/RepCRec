@@ -16,9 +16,9 @@ public class RepCRec {
 		//System.out.println("Enter the test_script name/number");
 		// Modify the file path here
 		//String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_" + scanner.nextInt() + ".txt";
-		String file_path = "../RepCRec/test_scripts/test_script_18.txt";
-		//String file_name = new String(args[0]);
-		//String file_path = "../test_scripts/" + file_name;
+		//String file_path = "../test_scripts/test_script_18.txt";
+		String file_name = new String(args[0]);
+		String file_path = "../test_scripts/" + file_name;
 		//String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scyripts/test_script_3_5.txt";
 		FileReader file_reader = null;
 		try {
