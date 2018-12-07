@@ -78,8 +78,19 @@ public class TransactionManager {
 	 * @param I
 	 */
 	public void addInstruction(int id, Instruction I) {
-		Transaction T = transactions.get(id);
+		Transaction T = getTransaction(id);
 		T.addInstruction(I);
+	}
+
+	public Transaction getTransaction(int id) {
+		Transaction ReturnT = null;
+		for(Transaction T: transactions) {
+			if (T.transaction_ID==id) {
+				ReturnT = T;
+				break;
+			}
+		}
+		return ReturnT;
 	}
 
 	/**
@@ -87,7 +98,7 @@ public class TransactionManager {
 	 * @param id
 	 */
 	public void createSnapshot(int id) {
-		Transaction T = transactions.get(id);
+		Transaction T = getTransaction(id);
 		ArrayList<Site> snapshot = (ArrayList<Site>)sites.clone();
 		T.createSnapshot(snapshot);
 	}
@@ -100,7 +111,7 @@ public class TransactionManager {
 	 */
 	public void processInstruction(Instruction I, int transaction_id, boolean flag) {
 		String operation = I.getOperation();
-		Transaction T = transactions.get(transaction_id);
+		Transaction T = getTransaction(transaction_id);
 		if (T.readOnly) {
 			processReadOnly(I, transaction_id);
 
@@ -129,7 +140,7 @@ public class TransactionManager {
 	 */
 	public void processWrite(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
 		String operation = I.getOperation();
-		Transaction T = transactions.get(transaction_id);
+		Transaction T = getTransaction(transaction_id);
 		T.storeAccessSites(sites);
 		T.addSitesToInstruction(I);
 		ArrayList<Site> accessedSites = I.getAccessSites();
@@ -180,7 +191,7 @@ public class TransactionManager {
 	 */
 	public void processRead(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
 		String operation = I.getOperation();
-		Transaction T = transactions.get(transaction_id);
+		Transaction T = getTransaction(transaction_id);
 		T.storeAccessSites(sites);
 		T.addSitesToInstruction(I);
 		ArrayList<Site> accessedSites = I.getAccessSites();
@@ -241,7 +252,7 @@ public class TransactionManager {
 	 * @param transaction_id transaction id
 	 */
 	public void processReadOnly(Instruction I, int transaction_id) {
-		Transaction T = transactions.get(transaction_id);
+		Transaction T = getTransaction(transaction_id);
 		ArrayList<Site> snapshot = T.getSnapshot();
 		if (I.data_item % 2 == 0) {
 			doOnce: for (Site s : snapshot) {
@@ -385,14 +396,14 @@ public class TransactionManager {
 			
 			Instruction I = waitingInstructions.pollLast();
 			if (I != null) {
-				processInstruction(I, I.transaction_id - 1, true);
+				processInstruction(I, I.transaction_id, true);
 			}
 			getnextblocked = true;
 			deadlock = false;
 		} else {
 			System.out.println("Deadlock not detected!");
 		}
-		Transaction T = transactions.get(transaction_id);
+		Transaction T = getTransaction(transaction_id);
 		if (T.isReadOnly())
 			System.out.println("Transaction T" + T.transaction_ID + " commits!:)");
 		else {
@@ -448,7 +459,7 @@ public class TransactionManager {
 			if(!getnextblocked) {
 			Instruction I = waitingInstructions.poll();
 			if (I != null) {
-				processInstruction(I, I.transaction_id - 1, true);
+				processInstruction(I, I.transaction_id, true);
 			}
 			}
 		}

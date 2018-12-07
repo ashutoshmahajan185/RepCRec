@@ -68,8 +68,8 @@ public class RepCRec {
 			case "BEGINRO":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(')')));
 				transaction_manager.beginTransaction(transaction_ID, timer);
-				transaction_manager.transactions.get(transaction_ID - 1).setreadOnly();
-				transaction_manager.createSnapshot(transaction_ID - 1);
+				transaction_manager.getTransaction(transaction_ID).setreadOnly();
+				transaction_manager.createSnapshot(transaction_ID);
 				break;
 
 			case "R":
@@ -77,8 +77,8 @@ public class RepCRec {
 				data_item = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('x') + 1, current_instruction.indexOf(')')));
 				transaction_manager.graph.addEdge("T" + transaction_ID, "x" + data_item);
 				Instruction I = new Instruction(data_item,transaction_ID);
-				transaction_manager.addInstruction(transaction_ID - 1, I);
-				transaction_manager.processInstruction(I, transaction_ID - 1, false);
+				transaction_manager.addInstruction(transaction_ID, I);
+				transaction_manager.processInstruction(I, transaction_ID, false);
 				break;
 
 			case "W":
@@ -88,8 +88,8 @@ public class RepCRec {
 				System.out.println("Transaction " + "T" + transaction_ID + "  Data " + "x" + data_item);
 				transaction_manager.graph.addEdge("T" + transaction_ID, "x" + data_item);
 				Instruction I_write = new Instruction(data_item,transaction_ID,write_value);
-				transaction_manager.addInstruction(transaction_ID - 1, I_write);
-				transaction_manager.processInstruction(I_write,transaction_ID - 1,false);
+				transaction_manager.addInstruction(transaction_ID, I_write);
+				transaction_manager.processInstruction(I_write,transaction_ID,false);
 				break;
 
 			case "FAIL":
@@ -104,7 +104,7 @@ public class RepCRec {
 
 			case "END":
 				transaction_ID = Integer.parseInt(current_instruction.substring(current_instruction.indexOf('T') + 1, current_instruction.indexOf(')')));
-				transaction_manager.endTransaction(transaction_ID - 1);
+				transaction_manager.endTransaction(transaction_ID);
 				break;
 
 			case "DUMP":
