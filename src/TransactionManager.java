@@ -1,7 +1,11 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-// Instance of a Transaction Manager. Never Fails
+/**
+* An Instance of the Transaction Manager. It never fails. It is responsible for processing all the instructions and the Transactions
+* @author Tushar Anchan
+* @author Ashutosh Mahajan
+*/
 
 public class TransactionManager {
 
@@ -18,7 +22,7 @@ public class TransactionManager {
 	}
 
 	/**
-	 * 
+	 * Initializes all sites. Creates a site instance and stores the list of all sites
 	 */
 	public void initializeSites() {
 
@@ -28,20 +32,21 @@ public class TransactionManager {
 	}
 
 	/**
-	 * 
+	 * Sets the flag to check the permission of a read Instruction
 	 */
 	void setReadFlag() {
 		this.addflagToCheckRead = true;
 	}
 
 	/**
-	 * 
+	 * Disables the flag to check the permission of a read Instruction
 	 */
 	void disableReadFlag() {
 		this.addflagToCheckRead = false;
 	}
 
-	/**
+	/** 
+	 * Fails the site given: sets it as down and resets its locktables
 	 * @param site_id
 	 */
 	public void failSite(int site_id) {
@@ -49,6 +54,7 @@ public class TransactionManager {
 	}
 
 	/**
+	 * Recovers the site back and sets the flag to check the read permission in future
 	 * @param site_id
 	 */
 	public void recoverSite(int site_id) {
@@ -58,6 +64,7 @@ public class TransactionManager {
 	}
 
 	/**
+	 * method to begin the transaction
 	 * @param transaction_ID
 	 * @param timer
 	 */
@@ -65,7 +72,8 @@ public class TransactionManager {
 		transactions.add(new Transaction(transaction_ID, timer));
 	}
 
-	/**
+	/** 
+	 * adds the instruction to the list of instructions in a transaction
 	 * @param id
 	 * @param I
 	 */
@@ -75,6 +83,7 @@ public class TransactionManager {
 	}
 
 	/**
+	 * creates a snapshot of the sites
 	 * @param id
 	 */
 	public void createSnapshot(int id) {
@@ -84,9 +93,10 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param I
-	 * @param transaction_id
-	 * @param flag
+	 * This method reads the type of the Instruction to process and calls the appropriate function to process it.
+	 * @param I Instruction
+	 * @param transaction_id transaction id
+	 * @param flag 
 	 */
 	public void processInstruction(Instruction I, int transaction_id, boolean flag) {
 		String operation = I.getOperation();
@@ -111,10 +121,11 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param I
+	 * The is the main method to process a Write Instruction. It first calls the request Lock function and grants the lock accordingly or blocks the Instruction in the waiting queue. Note that the write locks are granted to all available sites as per the algorithm.
+	 * @param I 
 	 * @param transaction_id
 	 * @param flag
-	 * @param addFlagToCheckRead
+	 * @param addFlagToCheckRead to check the read permission
 	 */
 	public void processWrite(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
 		String operation = I.getOperation();
@@ -133,6 +144,11 @@ public class TransactionManager {
 				for (Site s : accessedSites) {
 					s.setWriteLock(T, I.data_item - 1);
 				}
+				if (accessedSites.isEmpty()) {
+					System.out.println("blocked");
+					// add to waiting queue
+					waitingInstructions.add(I);
+				}
 			} else {
 				int site_id = 1 + I.data_item % 10;
 				Site s = sites.get(site_id - 1);
@@ -140,8 +156,13 @@ public class TransactionManager {
 				if (actualSiteIndex != -1) {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 					actualSite.setWriteLock(T, I.data_item - 1);
+				} else {
+					// else add to waiting maybe
+					System.out.println("blocked");
+					// add to waiting queue
+					waitingInstructions.add(I);
 				}
-				// else add to waiting maybe
+				
 			}
 		} else {
 			System.out.println("blocked");
@@ -151,10 +172,11 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param I
-	 * @param transaction_id
+	 * Similar to processWrite. The difference here is that after the locks are granted, it also reads the value from the site and outputs to console. Note that the read lock here is granted to the first available site as per the algorithm requirements. If no site is available, the Instruction is blocked.
+	 * @param I Instruction
+	 * @param transaction_id transaction id
 	 * @param flag
-	 * @param addFlagToCheckRead
+	 * @param addFlagToCheckRead to check read permission
 	 */
 	public void processRead(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
 		String operation = I.getOperation();
@@ -214,8 +236,9 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param I
-	 * @param transaction_id
+	 * This is read method to process ReadOnly transactions. It accesses the snapshot of the sites when the transaction was created and reads the values from it. This does not request any locks.
+	 * @param I Instruction 
+	 * @param transaction_id transaction id
 	 */
 	public void processReadOnly(Instruction I, int transaction_id) {
 		Transaction T = transactions.get(transaction_id);
@@ -248,7 +271,8 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param I
+	 * checks if there is an instruction in the waiting queue waiting to get a lock on the same variable as the input Instruction
+	 * @param I Instruction
 	 * @return
 	 */
 	boolean isAlreadyWaitingInstruction(Instruction I) {
@@ -260,10 +284,11 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param data_item
-	 * @param I
+	 * This method checks if the Instruction can be given a write lock. It checks all sites of a variable for read locks and write locks and returns a boolean accordingly. This method also handles the case where a read lock is to be promoted into a write lock.
+	 * @param data_item variable
+	 * @param I Instruction
 	 * @param flag
-	 * @param sites
+	 * @param sites accessed sites(that was up)
 	 * @return
 	 */
 	boolean requestWriteLock(int data_item, Instruction I, boolean flag, ArrayList<Site> sites) {
@@ -302,10 +327,11 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param data_item
-	 * @param I
+	 * Similar to the requestWriteLock method, this method checks for any write lock conflicts at all sites of a variable. This method also handles the case where the lock is to be promoted into a write lock.
+	 * @param data_item variable
+	 * @param I Instruction
 	 * @param flag
-	 * @param sites
+	 * @param sites accessed sites(that was up)
 	 * @return
 	 */
 	boolean requestReadLock(int data_item, Instruction I, boolean flag, ArrayList<Site> sites) {
@@ -342,7 +368,8 @@ public class TransactionManager {
 	}
 
 	/**
-	 * @param transaction_id
+	 * This the method to process the “end” instruction for a transaction. It first calls a method to perform deadlock detection and then validates all the instructions for the transaction by checking if it has locks on all appropriate sites or if any site failed after an access. In addition, it calls methods to commit or abort the transaction and further processes the next instruction from the waiting queue.
+	 * @param transaction_id transaction id
 	 */
 	void endTransaction(int transaction_id) {
 		
@@ -394,10 +421,7 @@ public class TransactionManager {
 						boolean flag2 = false;
 						for (Site s : accessedSites) {
 							flag2 = flag2 || !s.isSiteUp() || !s.hasReadLock(T, I.data_item - 1);
-							// if (!(s.isSiteUp() && s.hasReadLock(T, I.data_item - 1))) {
-							// flag = false;
-							// break;
-							// }
+
 						}
 						if (!flag2) {
 							flag = false;
@@ -450,45 +474,45 @@ public class TransactionManager {
 		releaseLocks(sites,T);
 	}
 	
-public void releaseLocks(ArrayList<Site> originalSites, Transaction T) {
-		
-		for (Instruction I : T.Instructions) {
-			ArrayList<Site> sites = I.getAccessSites();
-			if (I.operation.equals("write")) {
-				if (I.data_item % 2 == 0) {
-					for (Site s : sites) {
+	private void releaseLocks(ArrayList<Site> originalSites, Transaction T) {
+			
+			for (Instruction I : T.Instructions) {
+				ArrayList<Site> sites = I.getAccessSites();
+				if (I.operation.equals("write")) {
+					if (I.data_item % 2 == 0) {
+						for (Site s : sites) {
+							if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
+								s.clearWriteLock(I.data_item - 1);
+								
+							}
+
+						}
+					} else {
+						int site_id = 1 + I.data_item % 10;
+						Site s = originalSites.get(site_id - 1);
 						if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
 							s.clearWriteLock(I.data_item - 1);
-							
 						}
-
-					}
-				} else {
-					int site_id = 1 + I.data_item % 10;
-					Site s = originalSites.get(site_id - 1);
-					if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
-						s.clearWriteLock(I.data_item - 1);
 					}
 				}
-			}
-			if (I.operation.equals("read")) {
-				if (I.data_item % 2 == 0) {
-					for (Site s : sites) {
+				if (I.operation.equals("read")) {
+					if (I.data_item % 2 == 0) {
+						for (Site s : sites) {
+							if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
+								s.clearReadLock(T, I.data_item - 1);
+							}
+						}
+					} else {
+						int site_id = 1 + I.data_item % 10;
+						Site s = originalSites.get(site_id - 1);
 						if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
 							s.clearReadLock(T, I.data_item - 1);
 						}
 					}
-				} else {
-					int site_id = 1 + I.data_item % 10;
-					Site s = originalSites.get(site_id - 1);
-					if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
-						s.clearReadLock(T, I.data_item - 1);
-					}
 				}
+				graph.removeEdge("T" + T.transaction_ID);
 			}
-			graph.removeEdge("T" + T.transaction_ID);
 		}
-	}
 
 	private int getYoungestTransaction() {
 
