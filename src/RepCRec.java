@@ -3,23 +3,20 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class RepCRec {
 
+	/**
+	 * @author Ashutosh Mahajan
+	 * @author Tushar Anchan
+	 */
 	public static void main(String[] args) {
 
 		System.out.println("Replicated Concurrency Control and Recovery Simulation\n");
 
-		Scanner scanner = new Scanner(System.in);
-
-		//System.out.println("Enter the test_script name/number");
-		// Modify the file path here
-		String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_21.txt";
-		//String file_path = "../test_scripts/test_script_18.txt";
-		//String file_name = new String(args[0]);
-		//String file_path = "../test_scripts/" + file_name;
-		//String file_path = "/Users/tushar/eclipse-workspace/RepCRec/RepCRec/test_scyripts/test_script_3_5.txt";
+		String file_name = new String(args[0]);
+		String file_path = "../test_scripts/" + file_name + ".txt";
+		//file_path = "E:\\Ecplise\\RepCRec\\test_scripts\\test_script_21.txt";
 		FileReader file_reader = null;
 		try {
 			file_reader = new FileReader(file_path);
@@ -108,13 +105,13 @@ public class RepCRec {
 				break;
 
 			case "DUMP":
-				/*String dump_parameter = current_instruction.substring(current_instruction.indexOf('(') + 1, current_instruction.indexOf(')'));
+				String dump_parameter = current_instruction.substring(current_instruction.indexOf('(') + 1, current_instruction.indexOf(')'));
 				if(dump_parameter.length() == 0)
 					transaction_manager.dump();
 				if(dump_parameter.length() == 1)
 					transaction_manager.dump(Integer.parseInt(dump_parameter));
 				if(dump_parameter.length() == 2)
-					transaction_manager.dump(dump_parameter);*/
+					transaction_manager.dump(dump_parameter);
 				break;
 
 			default:
@@ -122,30 +119,8 @@ public class RepCRec {
 				break;
 
 			}
-			//System.out.println(transaction_manager.transactions);
-
-			System.out.println("Operation: " + operation + " Transaction: T" + transaction_ID);
-			//System.out.println("Transaction: " + transaction_ID);
-			//System.out.println("Data Item: " + data_item);
-			//System.out.println("Site: " + site_ID);
-			
-
 
 		}
-		//		for(int i = 0; i < 10; i ++) {
-		//			
-		//			Site current_site = transaction_manager.sites.get(i);
-		//			System.out.print("\nSite " + current_site.site_ID);
-		//			System.out.println(" --> Data Items at this site: ");
-		//			ArrayList<Data> data_items_onsite = current_site.data_items;
-		//			for(int j = 0; j < data_items_onsite.size(); j ++) {
-		//				System.out.println("X" + data_items_onsite.get(j).data_index + ": " + data_items_onsite.get(j).data_value);
-		//			}
-		//		}
-
-
-		//System.out.println(transaction_manager.sites);
-		scanner.close();
 
 	}
 

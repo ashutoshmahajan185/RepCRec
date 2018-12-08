@@ -17,12 +17,15 @@ public class TransactionManager {
 
 	boolean addflagToCheckRead = false;
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	TransactionManager() {
 		initializeSites();
 	}
 
 	/**
-	 * Initializes all sites. Creates a site instance and stores the list of all sites
+	 * @author Ashutosh Mahajan
 	 */
 	public void initializeSites() {
 
@@ -30,9 +33,9 @@ public class TransactionManager {
 			sites.add(new Site(i));
 
 	}
-
+	
 	/**
-	 * Sets the flag to check the permission of a read Instruction
+	 * @author Tushar Anchan
 	 */
 	void setReadFlag() {
 		this.addflagToCheckRead = true;
@@ -40,6 +43,7 @@ public class TransactionManager {
 
 	/**
 	 * Disables the flag to check the permission of a read Instruction
+	 * @author Tushar Anchan
 	 */
 	void disableReadFlag() {
 		this.addflagToCheckRead = false;
@@ -47,6 +51,7 @@ public class TransactionManager {
 
 	/** 
 	 * Fails the site given: sets it as down and resets its locktables
+	 * @author Tushar Anchan
 	 * @param site_id
 	 */
 	public void failSite(int site_id) {
@@ -55,6 +60,7 @@ public class TransactionManager {
 
 	/**
 	 * Recovers the site back and sets the flag to check the read permission in future
+	 * @author Tushar Anchan
 	 * @param site_id
 	 */
 	public void recoverSite(int site_id) {
@@ -65,6 +71,7 @@ public class TransactionManager {
 
 	/**
 	 * method to begin the transaction
+	 * @author Tushar Anchan
 	 * @param transaction_ID
 	 * @param timer
 	 */
@@ -74,6 +81,7 @@ public class TransactionManager {
 
 	/** 
 	 * adds the instruction to the list of instructions in a transaction
+	 * @author Tushar Anchan
 	 * @param id
 	 * @param I
 	 */
@@ -82,6 +90,9 @@ public class TransactionManager {
 		T.addInstruction(I);
 	}
 
+	/**
+	 * @author Tushar Anchan
+	 */
 	public Transaction getTransaction(int id) {
 		Transaction ReturnT = null;
 		for(Transaction T: transactions) {
@@ -95,10 +106,12 @@ public class TransactionManager {
 
 	/**
 	 * creates a snapshot of the sites
+	 * @author Tushar Anchan
 	 * @param id
 	 */
 	public void createSnapshot(int id) {
 		Transaction T = getTransaction(id);
+		@SuppressWarnings("unchecked")
 		ArrayList<Site> snapshot = (ArrayList<Site>)sites.clone();
 		T.createSnapshot(snapshot);
 	}
@@ -107,7 +120,9 @@ public class TransactionManager {
 	 * This method reads the type of the Instruction to process and calls the appropriate function to process it.
 	 * @param I Instruction
 	 * @param transaction_id transaction id
-	 * @param flag 
+	 * @param flag
+	 * @author Tushan Anchan
+	 * @author Ashutosh Mahajan
 	 */
 	public void processInstruction(Instruction I, int transaction_id, boolean flag) {
 		String operation = I.getOperation();
@@ -137,9 +152,10 @@ public class TransactionManager {
 	 * @param transaction_id
 	 * @param flag
 	 * @param addFlagToCheckRead to check the read permission
+	 * @author Tushan Anchan
+	 * @author Ashutosh Mahajan
 	 */
 	public void processWrite(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
-		String operation = I.getOperation();
 		Transaction T = getTransaction(transaction_id);
 		T.storeAccessSites(sites);
 		T.addSitesToInstruction(I);
@@ -147,16 +163,14 @@ public class TransactionManager {
 		if(addFlagToCheckRead)
 			I.denyReadPermission();
 		if(requestWriteLock(I.data_item, I, flag, accessedSites)) {
-			System.out.println("Lock can be acquired" + "  T"+T.transaction_ID);
-			//System.out.println("Deadlock detection---" + I);
+			
 			graph.reverseEdge("T" + T.transaction_ID, "x" + I.data_item);
-			//System.out.println(graph);
+			
 			if (I.data_item % 2 == 0) {
 				for (Site s : accessedSites) {
 					s.setWriteLock(T, I.data_item - 1);
 				}
 				if (accessedSites.isEmpty()) {
-					System.out.println("blocked");
 					// add to waiting queue
 					waitingInstructions.add(I);
 				}
@@ -168,15 +182,13 @@ public class TransactionManager {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 					actualSite.setWriteLock(T, I.data_item - 1);
 				} else {
-					// else add to waiting maybe
-					System.out.println("blocked");
 					// add to waiting queue
 					waitingInstructions.add(I);
 				}
 
 			}
 		} else {
-			System.out.println("blocked");
+			
 			// add to waiting queue
 			waitingInstructions.add(I);
 		}
@@ -188,9 +200,10 @@ public class TransactionManager {
 	 * @param transaction_id transaction id
 	 * @param flag
 	 * @param addFlagToCheckRead to check read permission
+	 * @author Tushar Anchan
+	 * @author Ashutosh Mahajan
 	 */
 	public void processRead(Instruction I, int transaction_id, boolean flag, boolean addFlagToCheckRead) {
-		String operation = I.getOperation();
 		Transaction T = getTransaction(transaction_id);
 		T.storeAccessSites(sites);
 		T.addSitesToInstruction(I);
@@ -198,12 +211,11 @@ public class TransactionManager {
 		if (addFlagToCheckRead)
 			I.denyReadPermission();
 		if (requestReadLock(I.data_item, I, flag, accessedSites)) {
-			System.out.println("lock can be acquired" + "  T"+T.transaction_ID);
 			graph.reverseEdge("T" + T.transaction_ID, "x" + I.data_item);
 			if (I.data_item % 2 == 0) {
 				if (!accessedSites.isEmpty()) {
 					for (Site s : accessedSites) {
-						if (I.checkReadPermission && !s.canRead)
+						if (I.checkReadPermission && !s.can_read)
 							continue;
 						s.setReadLock(T, I.data_item - 1);
 						for (Data data : s.data_items) {
@@ -214,7 +226,6 @@ public class TransactionManager {
 						break;
 					}
 				} else {
-					System.out.println("blocked");
 					waitingInstructions.add(I);
 				}
 			} else {
@@ -224,9 +235,9 @@ public class TransactionManager {
 				if (actualSiteIndex != -1) {
 					Site actualSite = accessedSites.get(actualSiteIndex);
 					actualSite.setReadLock(T, I.data_item - 1);
-					if (I.checkReadPermission && !s.canRead)
+					if (I.checkReadPermission && !s.can_read) {
 						System.out.println("read not allowed");
-					else {
+					} else {
 						for (Data data : s.data_items) {
 							if (data.data_index == I.data_item) {
 								System.out.println("Site: " + s.site_ID + " data: " + data.data_value);
@@ -234,14 +245,11 @@ public class TransactionManager {
 						}
 					}
 				} else {
-					// else add to waiting maybe
-					System.out.println("blocked");
 					waitingInstructions.add(I);
 				}
 
 			}
 		} else {
-			System.out.println("blocked");
 			waitingInstructions.add(I);
 		}
 	}
@@ -250,6 +258,7 @@ public class TransactionManager {
 	 * This is read method to process ReadOnly transactions. It accesses the snapshot of the sites when the transaction was created and reads the values from it. This does not request any locks.
 	 * @param I Instruction 
 	 * @param transaction_id transaction id
+	 * @author Tushar Anchan
 	 */
 	public void processReadOnly(Instruction I, int transaction_id) {
 		Transaction T = getTransaction(transaction_id);
@@ -275,7 +284,6 @@ public class TransactionManager {
 					}
 				}
 			} else {
-				System.out.println("blocked");
 				waitingInstructions.add(I);
 			}
 		}
@@ -285,6 +293,7 @@ public class TransactionManager {
 	 * checks if there is an instruction in the waiting queue waiting to get a lock on the same variable as the input Instruction
 	 * @param I Instruction
 	 * @return
+	 * @author Tushar Anchan
 	 */
 	boolean isAlreadyWaitingInstruction(Instruction I) {
 		for (Instruction W : waitingInstructions) {
@@ -301,6 +310,7 @@ public class TransactionManager {
 	 * @param flag
 	 * @param sites accessed sites(that was up)
 	 * @return
+	 * @author Tushar Anchan
 	 */
 	boolean requestWriteLock(int data_item, Instruction I, boolean flag, ArrayList<Site> sites) {
 		if (!flag && waitingInstructions.size() > 0 && isAlreadyWaitingInstruction(I))
@@ -344,6 +354,7 @@ public class TransactionManager {
 	 * @param flag
 	 * @param sites accessed sites(that was up)
 	 * @return
+	 * @author Tushar Anchan
 	 */
 	boolean requestReadLock(int data_item, Instruction I, boolean flag, ArrayList<Site> sites) {
 		if (!flag && waitingInstructions.size() > 0 && isAlreadyWaitingInstruction(I))
@@ -381,26 +392,24 @@ public class TransactionManager {
 	/**
 	 * This the method to process the “end” instruction for a transaction. It first calls a method to perform deadlock detection and then validates all the instructions for the transaction by checking if it has locks on all appropriate sites or if any site failed after an access. In addition, it calls methods to commit or abort the transaction and further processes the next instruction from the waiting queue.
 	 * @param transaction_id transaction id
+	 * @author Ashutosh Mahajan
+	 * @author Tushar Anchan
 	 */
 	void endTransaction(int transaction_id) {
 
 		boolean flag = false;
 		Transaction youngest_transaction = transactions.get(getYoungestTransaction());
 		boolean deadlock = graph.detectDeadlock();
-		boolean getnextblocked = false;
-		//System.out.println("Deadlock " + deadlock);
 		if(deadlock) {
-			//System.out.println(graph);
-			//System.out.println(graph.containsMirrorEdges() + " " + graph.checkDegrees());
+			
 			if(!graph.containsMirrorEdges()){
-				System.out.println("Deadlock Detected");
+				System.out.println("Deadlock Detected!:(");
 				abortTransaction(youngest_transaction);
 
 				Instruction I = getNextWaitingInstruction(youngest_transaction);
 				if (I != null) {
 					processInstruction(I, I.transaction_id, true);
 				}
-				//getnextblocked = true;
 				deadlock = false;
 			} else if(graph.containsMirrorEdges()) {
 				if(graph.checkDegrees()) {
@@ -411,14 +420,13 @@ public class TransactionManager {
 					if (I != null) {
 						processInstruction(I, I.transaction_id, true);
 					}
-					//getnextblocked = true;
 					deadlock = false;
 				}
 			}
 
 
 		} else {
-			System.out.println("Deadlock not detected!");
+			//System.out.println("Deadlock not detected!:)");
 		}
 		Transaction T = getTransaction(transaction_id);
 		if (T.isReadOnly())
@@ -465,23 +473,22 @@ public class TransactionManager {
 					}
 				}
 			}
-
-			// Commit Transaction
-			if (flag) {
+			
+			if (flag) { // Commit Transaction
 				commitTransaction(T);
 			} else { // Abort Transaction
 				abortTransaction(T);
 			}
-
-
 			Instruction I = getNextWaitingInstruction(T);
 			if (I != null) {
 				processInstruction(I, I.transaction_id, true);
-
 			}
 		}
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private void commitTransaction(Transaction T) {
 
 		T.commitInstructions(sites);
@@ -492,16 +499,22 @@ public class TransactionManager {
 
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private void abortTransaction(Transaction T) {
 
 		System.out.println("Transaction T" + T.transaction_ID + " aborts!:(");	
 		for(Instruction I: T.Instructions) {
 			waitingInstructions.remove(I);
 		}
-
 		releaseLocks(sites,T);
 	}
 
+	/**
+	 * @author Tushar Anchan
+	 * @author Ashutosh Mahajan
+	 */
 	private void releaseLocks(ArrayList<Site> originalSites, Transaction T) {
 
 		for (Instruction I : T.Instructions) {
@@ -511,9 +524,7 @@ public class TransactionManager {
 					for (Site s : sites) {
 						if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
 							s.clearWriteLock(I.data_item - 1);
-
 						}
-
 					}
 				} else {
 					int site_id = 1 + I.data_item % 10;
@@ -542,6 +553,9 @@ public class TransactionManager {
 		}
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private int getYoungestTransaction() {
 
 		int index = 0;
@@ -553,10 +567,13 @@ public class TransactionManager {
 				index = i;
 			}
 		}
-
 		return index;
 	}
 
+	/**
+	 * @author Tushar Anchan
+	 * @author Ashutosh Mahajan
+	 */
 	public Instruction getNextWaitingInstruction(Transaction T) {
 		Instruction ReturnI = null;
 		for(Instruction I: waitingInstructions) {
@@ -571,25 +588,36 @@ public class TransactionManager {
 
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public void dump() {
-
 		for(int i = 0; i < sites.size(); i ++) {
 			System.out.println(sites.get(i));
 		}
-
 	}
-
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public void dump(int dump_parameter) {
-
 		System.out.println(sites.get(dump_parameter));
-
 	}
-
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public void dump(String dump_parameter) {
 
-
+		ArrayList<Data> temp_data = new ArrayList<Data>();
+		for(int i = 0; i < sites.size(); i ++) {
+			temp_data = sites.get(i).data_items;
+			for(int j = 0; j < temp_data.size(); j ++) {
+				if(temp_data.get(j).data_index == Integer.parseInt(dump_parameter.substring(1))) {
+					System.out.print("\nSite " + sites.get(i).site_ID + " --> ");
+					System.out.print("x" + temp_data.get(j).data_index + ": " + temp_data.get(j).data_value + " ");
+				}
+			}
+		}
 
 	}
-
 
 }

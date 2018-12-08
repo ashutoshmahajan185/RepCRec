@@ -6,11 +6,13 @@ public class Graph {
 
 	ArrayList<Edge> graph_edges = new ArrayList<Edge>();
 	ArrayList<Vertex> graph_vertices = new ArrayList<Vertex>();
+	ArrayList<Vertex> white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
+	ArrayList<Vertex> black_set = new ArrayList<Vertex>(); // Set of all visited nodes
+	ArrayList<Vertex> gray_set = new ArrayList<Vertex>();
 
-	Graph() {
-
-	}
-
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	void addEdge(String start_vertex, String end_vertex) {
 
 		Vertex sv = new Vertex(start_vertex);
@@ -24,32 +26,10 @@ public class Graph {
 		}
 
 	}
-
-	private boolean contains(Vertex sv) {
-		boolean flag = false;
-		for(int i = 0; i < graph_vertices.size(); i ++) {
-			if(graph_vertices.get(i).vertex_id.equals(sv.vertex_id)) {
-				flag = true;
-			}
-		}
-		return flag;
-	}
-
-	public String toString() {
-
-		String result = "Graph:\n";
-
-		for(int i = 0; i < graph_edges.size(); i ++) {
-			result = result + graph_edges.get(i).start_vertex.vertex_id + " --> " + graph_edges.get(i).end_vertex.vertex_id + "\n";
-		}
-		result = result + "\nVertices:\n";
-		for(int i = 0; i < graph_vertices.size(); i ++) {
-			result = result + graph_vertices.get(i).vertex_id + " ";
-		}		
-		return result;
-
-	}
-
+	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public void reverseEdge(String start_vertex, String end_vertex) {
 
 		Vertex temp_sv = new Vertex(start_vertex);
@@ -60,6 +40,22 @@ public class Graph {
 
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
+	private boolean contains(Vertex sv) {
+		boolean flag = false;
+		for(int i = 0; i < graph_vertices.size(); i ++) {
+			if(graph_vertices.get(i).vertex_id.equals(sv.vertex_id)) {
+				flag = true;
+			}
+		}
+		return flag;
+	}
+
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	int findEdge(Vertex tsv, Vertex tev) {
 
 		int index = -1;
@@ -76,11 +72,10 @@ public class Graph {
 
 	}
 
-	ArrayList<Vertex> white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
-	ArrayList<Vertex> black_set = new ArrayList<Vertex>(); // Set of all visited nodes
-	ArrayList<Vertex> gray_set = new ArrayList<Vertex>();
-
 	@SuppressWarnings("unchecked")
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public boolean detectDeadlock() {
 
 		//System.out.println("Detecting Deadlock" + this);
@@ -102,22 +97,9 @@ public class Graph {
 
 	}
 
-	private void clearColorSets() {
-		white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
-		black_set = new ArrayList<Vertex>(); // Set of all visited nodes
-		gray_set = new ArrayList<Vertex>();
-	}
-
-	private void clearAdjacentVertices() {
-
-		
-		for(int i = 0; i < graph_vertices.size(); i ++) {
-			graph_vertices.get(i).adjacent_vertices.clear();
-
-		}
-
-	}
-
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private boolean dfs(Vertex current) {
 
 		moveVertexFromWhiteToGray(current);
@@ -142,11 +124,27 @@ public class Graph {
 
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private void moveVertexFromGrayToBlack(Vertex current) {
 		black_set.add(current);
 		gray_set.remove(current);
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
+	private void moveVertexFromWhiteToGray(Vertex current) {
+
+		gray_set.add(current);
+		white_set.remove(current);
+
+	}
+	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private boolean presentInGraySet(Vertex neighbour) {
 		boolean flag = false;
 		for(int i = 0; i <  gray_set.size(); i ++) {
@@ -156,6 +154,9 @@ public class Graph {
 		}
 		return flag;
 	}
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 
 	private boolean presentInBlackSet(Vertex neighbour) {
 
@@ -169,6 +170,9 @@ public class Graph {
 
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private void updateAdjacentVertices() {
 
 		clearAdjacentVertices();
@@ -178,7 +182,28 @@ public class Graph {
 
 		}
 	}
+	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
+	private void clearAdjacentVertices() {
+		for(int i = 0; i < graph_vertices.size(); i ++) {
+			graph_vertices.get(i).adjacent_vertices.clear();
 
+		}
+	}
+	/**
+	 * @author Ashutosh Mahajan
+	 */
+	private void clearColorSets() {
+		white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
+		black_set = new ArrayList<Vertex>(); // Set of all visited nodes
+		gray_set = new ArrayList<Vertex>();
+	}
+
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	private int getIndex(Vertex start_vertex) {
 
 		int index = -1;
@@ -190,13 +215,9 @@ public class Graph {
 		return index;
 	}
 
-	private void moveVertexFromWhiteToGray(Vertex current) {
-
-		gray_set.add(current);
-		white_set.remove(current);
-
-	}
-
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public void removeEdge(String vertex) {
 
 		for(int i = 0; i < graph_edges.size(); i ++) {
@@ -231,6 +252,9 @@ public class Graph {
 
 	}
 	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	boolean checkDegrees() {
 		
 		HashMap<String, Integer[]> result = new HashMap<String, Integer[]>();
@@ -257,10 +281,12 @@ public class Graph {
 				return true;
 			}
 		}
-		
 		return false;
 	}
 
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public boolean containsMirrorEdges() {
 		
 		for(Edge e: graph_edges) {
@@ -272,8 +298,25 @@ public class Graph {
 				}
 			}
 		}
-		
 		return false;
+	}
+
+	/**
+	 * @author Ashutosh Mahajan
+	 */
+	public String toString() {
+
+		String result = "Graph:\n";
+
+		for(int i = 0; i < graph_edges.size(); i ++) {
+			result = result + graph_edges.get(i).start_vertex.vertex_id + " --> " + graph_edges.get(i).end_vertex.vertex_id + "\n";
+		}
+		result = result + "\nVertices:\n";
+		for(int i = 0; i < graph_vertices.size(); i ++) {
+			result = result + graph_vertices.get(i).vertex_id + " ";
+		}		
+		return result;
+
 	}
 
 }

@@ -7,11 +7,14 @@ public class Site {
 	
 	int site_ID = 0;
 	String state; // State of the site: Up or Down
-	boolean canRead = true;
+	boolean can_read = true;
 	ArrayList<Data> data_items = new ArrayList<Data>();
 	Transaction[] writeLockTable = new Transaction[21];
 	ArrayList<ArrayList<Transaction>> readLockTable = new ArrayList<ArrayList<Transaction>>(21);
 	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	Site(int site_ID) {
 		
 		this.site_ID = site_ID;
@@ -23,6 +26,9 @@ public class Site {
 		
 	}
 	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	void addDataItems() {
 		
 		// Adding even indexed data items
@@ -38,6 +44,10 @@ public class Site {
 		}
 		
 	}
+	
+	/**
+	 * @author Tushar Anchan
+	 */
 	protected Site clone() {
 		Site s = new Site(this.site_ID);
 		//s.data_items = (ArrayList<Data>) this.data_items.clone();
@@ -47,34 +57,49 @@ public class Site {
 		}
 		return s;
 	}
-	void initializeSite() {
-		
-	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void preventReads() {
-		this.canRead = false;
+		this.can_read = false;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void allowReads() {
-		this.canRead = true;
+		this.can_read = true;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	boolean isSiteUp() {
 		return this.state.equals("up");
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void failSite() {
 		this.state = "down";
 		resetReadLockTable();
 		resetWriteLockTable();
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void recoverSite() {
 		this.state = "up";
 		resetReadLockTable();
 		resetWriteLockTable();
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void resetReadLockTable() {
 		this.readLockTable.clear();
 		for (int i=0; i<21; i++) {
@@ -82,42 +107,72 @@ public class Site {
 		    }
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void resetWriteLockTable() {
 		this.writeLockTable = new Transaction[21];
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void setWriteLock(Transaction T,int id) {
 		writeLockTable[id] = T;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	boolean checkWriteLock(Transaction T, int id) {
 		return writeLockTable[id]==T;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void clearWriteLock(int id) {
 		writeLockTable[id] = null;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void setReadLock(Transaction T, int id) {
 		readLockTable.get(id).add(T);
 	}
     
+	/**
+	 * @author Tushar Anchan
+	 */
 	void clearReadLock(Transaction T,int id) {
 	    readLockTable.get(id).remove(T);
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	boolean hasReadLock(Transaction T, int id) {
 		return readLockTable.get(id).contains(T);
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	boolean isEmptyWriteLock(int id) {
 		return writeLockTable[id]==null;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	boolean checkReadLock(int id) {
 		return readLockTable.get(id).isEmpty();	
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
 	void writeValue(int id,int value) {
 		for(Data data:data_items) {
 			if(data.data_index==id) {
@@ -126,6 +181,9 @@ public class Site {
 		}
 	}
 	
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	public String toString() {
 		
 		String result = "\nSite " + this.site_ID + " --> ";

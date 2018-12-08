@@ -10,6 +10,9 @@ public class Instruction {
 	ArrayList<Site> accessSites = new ArrayList<Site>();
 	boolean checkReadPermission = false;
 	// Read constructor
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	Instruction(int data_item,int transaction_id) {
 		
 		this.operation = "read";
@@ -19,6 +22,9 @@ public class Instruction {
 		
 	}
 	//write constructor
+	/**
+	 * @author Ashutosh Mahajan
+	 */
 	Instruction(int data_item,int transaction_id,int write_value){
 		this.operation = "write";
 		this.data_item = data_item;
@@ -26,26 +32,44 @@ public class Instruction {
 		this.transaction_id = transaction_id;
 	}
 	
+	/**
+	 * @author Tushar Anchan
+	 */
     String getOperation() {
     	return this.operation;
     }
     
+    /**
+	 * @author Tushar Anchan
+	 */
     int getdata_item() {
     	return this.data_item;
     }
     
+    /**
+	 * @author Tushar Anchan
+	 */
     void setAccessSites(ArrayList<Site> sites) {
     	this.accessSites = sites;
     }
     
+    /**
+	 * @author Tushar Anchan
+	 */
     ArrayList<Site> getAccessSites() {
     	return this.accessSites;
     }
     
+    /**
+	 * @author Tushar Anchan
+	 */
     void denyReadPermission() {
     	this.checkReadPermission = true;
     }
     
+    /**
+	 * @author Ashutosh Mahajan
+	 */
     public String toString() {
     	
     	String result = "\nOperation: " + operation + "\nData Item: " + data_item + "\nTransaction: " + transaction_id;
