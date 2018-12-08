@@ -2,10 +2,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
-* An Instance of the Transaction Manager. It never fails. It is responsible for processing all the instructions and the Transactions
-* @author Tushar Anchan
-* @author Ashutosh Mahajan
-*/
+ * An Instance of the Transaction Manager. It never fails. It is responsible for processing all the instructions and the Transactions
+ * @author Tushar Anchan
+ * @author Ashutosh Mahajan
+ */
 
 public class TransactionManager {
 
@@ -173,7 +173,7 @@ public class TransactionManager {
 					// add to waiting queue
 					waitingInstructions.add(I);
 				}
-				
+
 			}
 		} else {
 			System.out.println("blocked");
@@ -238,7 +238,7 @@ public class TransactionManager {
 					System.out.println("blocked");
 					waitingInstructions.add(I);
 				}
-				
+
 			}
 		} else {
 			System.out.println("blocked");
@@ -379,27 +379,44 @@ public class TransactionManager {
 	}
 
 	/**
-	 * This the method to process the ‚Äúend‚Äù instruction for a transaction. It first calls a method to perform deadlock detection and then validates all the instructions for the transaction by checking if it has locks on all appropriate sites or if any site failed after an access. In addition, it calls methods to commit or abort the transaction and further processes the next instruction from the waiting queue.
+	 * This the method to process the ìendî instruction for a transaction. It first calls a method to perform deadlock detection and then validates all the instructions for the transaction by checking if it has locks on all appropriate sites or if any site failed after an access. In addition, it calls methods to commit or abort the transaction and further processes the next instruction from the waiting queue.
 	 * @param transaction_id transaction id
 	 */
 	void endTransaction(int transaction_id) {
-		
+
 		boolean flag = false;
 		Transaction youngest_transaction = transactions.get(getYoungestTransaction());
 		boolean deadlock = graph.detectDeadlock();
 		boolean getnextblocked = false;
-		System.out.println("Deadlock " + deadlock);
+		//System.out.println("Deadlock " + deadlock);
 		if(deadlock) {
-			//System.out.println("Deadlock detected!");
-			//System.out.println("Aborting the youngest transaction T" + youngest_transaction.transaction_ID);
-			abortTransaction(youngest_transaction);
-			
-			Instruction I = waitingInstructions.pollLast();
-			if (I != null) {
-				processInstruction(I, I.transaction_id, true);
+			//System.out.println(graph);
+			//System.out.println(graph.containsMirrorEdges() + " " + graph.checkDegrees());
+			if(!graph.containsMirrorEdges()){
+				System.out.println("Deadlock Detected");
+				abortTransaction(youngest_transaction);
+
+				Instruction I = waitingInstructions.pollLast();
+				if (I != null) {
+					processInstruction(I, I.transaction_id, true);
+				}
+				getnextblocked = true;
+				deadlock = false;
+			} else if(graph.containsMirrorEdges()) {
+				if(graph.checkDegrees()) {
+					System.out.println("Deadlock Detected");
+					abortTransaction(youngest_transaction);
+
+					Instruction I = waitingInstructions.pollLast();
+					if (I != null) {
+						processInstruction(I, I.transaction_id, true);
+					}
+					getnextblocked = true;
+					deadlock = false;
+				}
 			}
-			getnextblocked = true;
-			deadlock = false;
+
+
 		} else {
 			System.out.println("Deadlock not detected!");
 		}
@@ -455,24 +472,24 @@ public class TransactionManager {
 			} else { // Abort Transaction
 				abortTransaction(T);
 			}
-			
+
 			if(!getnextblocked) {
-			Instruction I = waitingInstructions.poll();
-			if (I != null) {
-				processInstruction(I, I.transaction_id, true);
-			}
+				Instruction I = waitingInstructions.poll();
+				if (I != null) {
+					processInstruction(I, I.transaction_id, true);
+				}
 			}
 		}
 	}
 
 	private void commitTransaction(Transaction T) {
-		
+
 		T.commitInstructions(sites);
 		releaseLocks(sites,T);
 		if(T.getTMFlag())
 			disableReadFlag();
 		System.out.println("Transaction T" + T.transaction_ID + " commits!:)");
-		
+
 	}
 
 	private void abortTransaction(Transaction T) {
@@ -481,49 +498,49 @@ public class TransactionManager {
 		for(Instruction I: T.Instructions) {
 			waitingInstructions.remove(I);
 		}
-	
+
 		releaseLocks(sites,T);
 	}
-	
-	private void releaseLocks(ArrayList<Site> originalSites, Transaction T) {
-			
-			for (Instruction I : T.Instructions) {
-				ArrayList<Site> sites = I.getAccessSites();
-				if (I.operation.equals("write")) {
-					if (I.data_item % 2 == 0) {
-						for (Site s : sites) {
-							if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
-								s.clearWriteLock(I.data_item - 1);
-								
-							}
 
-						}
-					} else {
-						int site_id = 1 + I.data_item % 10;
-						Site s = originalSites.get(site_id - 1);
+	private void releaseLocks(ArrayList<Site> originalSites, Transaction T) {
+
+		for (Instruction I : T.Instructions) {
+			ArrayList<Site> sites = I.getAccessSites();
+			if (I.operation.equals("write")) {
+				if (I.data_item % 2 == 0) {
+					for (Site s : sites) {
 						if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
 							s.clearWriteLock(I.data_item - 1);
+
 						}
+
+					}
+				} else {
+					int site_id = 1 + I.data_item % 10;
+					Site s = originalSites.get(site_id - 1);
+					if (s.isSiteUp() && s.checkWriteLock(T, I.data_item - 1)) {
+						s.clearWriteLock(I.data_item - 1);
 					}
 				}
-				if (I.operation.equals("read")) {
-					if (I.data_item % 2 == 0) {
-						for (Site s : sites) {
-							if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
-								s.clearReadLock(T, I.data_item - 1);
-							}
-						}
-					} else {
-						int site_id = 1 + I.data_item % 10;
-						Site s = originalSites.get(site_id - 1);
+			}
+			if (I.operation.equals("read")) {
+				if (I.data_item % 2 == 0) {
+					for (Site s : sites) {
 						if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
 							s.clearReadLock(T, I.data_item - 1);
 						}
 					}
+				} else {
+					int site_id = 1 + I.data_item % 10;
+					Site s = originalSites.get(site_id - 1);
+					if (s.isSiteUp() && s.hasReadLock(T, I.data_item - 1)) {
+						s.clearReadLock(T, I.data_item - 1);
+					}
 				}
-				graph.removeEdge("T" + T.transaction_ID);
 			}
+			graph.removeEdge("T" + T.transaction_ID);
 		}
+	}
 
 	private int getYoungestTransaction() {
 
@@ -539,6 +556,18 @@ public class TransactionManager {
 
 		return index;
 	}
+	
+	/*public Instruction getNextWaitingInstruction(Transaction T) {
+		
+		for(Instruction I: waitingInstructions) {
+			for(Instruction TI:T.Instructions) {
+				if(TI.data_item==I.data_item) {
+					
+				}
+			}
+		}
+		
+	}*/
 
 	public void dump() {
 
@@ -549,16 +578,16 @@ public class TransactionManager {
 	}
 
 	public void dump(int dump_parameter) {
-		
+
 		System.out.println(sites.get(dump_parameter));
-		
+
 	}
 
 	public void dump(String dump_parameter) {
-		
-		
-		
+
+
+
 	}
-	
+
 
 }

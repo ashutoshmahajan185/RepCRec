@@ -1,17 +1,18 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class Graph {
-	
+
 	ArrayList<Edge> graph_edges = new ArrayList<Edge>();
 	ArrayList<Vertex> graph_vertices = new ArrayList<Vertex>();
-	
+
 	Graph() {
-		
+
 	}
-	
+
 	void addEdge(String start_vertex, String end_vertex) {
-		
+
 		Vertex sv = new Vertex(start_vertex);
 		Vertex ev = new Vertex(end_vertex);	
 		graph_edges.add(new Edge(new Vertex(start_vertex), new Vertex(end_vertex)));
@@ -21,9 +22,9 @@ public class Graph {
 		if(!contains(ev)) {
 			graph_vertices.add(graph_edges.get(graph_edges.size() - 1).end_vertex);
 		}
-	
+
 	}
-	
+
 	private boolean contains(Vertex sv) {
 		boolean flag = false;
 		for(int i = 0; i < graph_vertices.size(); i ++) {
@@ -35,9 +36,9 @@ public class Graph {
 	}
 
 	public String toString() {
-		
+
 		String result = "Graph:\n";
-		
+
 		for(int i = 0; i < graph_edges.size(); i ++) {
 			result = result + graph_edges.get(i).start_vertex.vertex_id + " --> " + graph_edges.get(i).end_vertex.vertex_id + "\n";
 		}
@@ -46,21 +47,21 @@ public class Graph {
 			result = result + graph_vertices.get(i).vertex_id + " ";
 		}		
 		return result;
-		
+
 	}
 
 	public void reverseEdge(String start_vertex, String end_vertex) {
-		
+
 		Vertex temp_sv = new Vertex(start_vertex);
 		Vertex temp_ev = new Vertex(end_vertex);
 		Edge current_edge = graph_edges.get(findEdge(temp_sv, temp_ev));
 		current_edge.start_vertex = temp_ev;
 		current_edge.end_vertex = temp_sv;
-		
+
 	}
-	
+
 	int findEdge(Vertex tsv, Vertex tev) {
-		
+
 		int index = -1;
 		for(int i = 0; i < graph_edges.size(); i ++) {
 			Edge current_edge = graph_edges.get(i);
@@ -72,18 +73,20 @@ public class Graph {
 		}
 
 		return index;
-		
+
 	}
 
 	ArrayList<Vertex> white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
 	ArrayList<Vertex> black_set = new ArrayList<Vertex>(); // Set of all visited nodes
 	ArrayList<Vertex> gray_set = new ArrayList<Vertex>();
-	
+
 	@SuppressWarnings("unchecked")
 	public boolean detectDeadlock() {
-		
+
 		//System.out.println("Detecting Deadlock" + this);
+		
 		clearAdjacentVertices();
+		clearColorSets();
 		updateAdjacentVertices();
 		
 		white_set = (ArrayList<Vertex>) graph_vertices.clone();
@@ -95,43 +98,48 @@ public class Graph {
 			}
 		}
 		return false;
-		
-		
+
+
+	}
+
+	private void clearColorSets() {
+		white_set = new ArrayList<Vertex>(); // Set of all unvisited nodes
+		black_set = new ArrayList<Vertex>(); // Set of all visited nodes
+		gray_set = new ArrayList<Vertex>();
 	}
 
 	private void clearAdjacentVertices() {
+
 		
-		for(int i = 0; i < graph_edges.size(); i ++) {
-			int index = getIndex(graph_edges.get(i).start_vertex);
-			graph_vertices.get(index).adjacent_vertices.clear();
-		
+		for(int i = 0; i < graph_vertices.size(); i ++) {
+			graph_vertices.get(i).adjacent_vertices.clear();
+
 		}
-		
+
 	}
 
 	private boolean dfs(Vertex current) {
-		
+
 		moveVertexFromWhiteToGray(current);
 		for(Vertex neighbour: current.adjacent_vertices) {	
-			
+
 			if(getIndex(neighbour) != -1) {
 				neighbour = graph_vertices.get(getIndex(neighbour));
+				
+				if(presentInBlackSet(neighbour)) {
+					continue;
+				}
+				if(presentInGraySet(neighbour)) {
+					return true;
+				}
+				if(dfs(neighbour)) {
+					return true;
+				}
 			}
-			
-			if(presentInBlackSet(neighbour)) {
-				continue;
-			}
-			if(presentInGraySet(neighbour)) {
-				return true;
-			}
-			if(dfs(neighbour)) {
-				return true;
-			}
-
 		}
 		moveVertexFromGrayToBlack(current);
 		return false;
-	
+
 	}
 
 	private void moveVertexFromGrayToBlack(Vertex current) {
@@ -158,20 +166,21 @@ public class Graph {
 			}
 		}
 		return flag;
-		
+
 	}
 
 	private void updateAdjacentVertices() {
-		
+
+		clearAdjacentVertices();
 		for(int i = 0; i < graph_edges.size(); i ++) {
 			int index = getIndex(graph_edges.get(i).start_vertex);
 			graph_vertices.get(index).addAdjacentVertex(graph_edges.get(i).end_vertex);
-		
+
 		}
 	}
 
 	private int getIndex(Vertex start_vertex) {
-		
+
 		int index = -1;
 		for(int i = 0; i < graph_vertices.size(); i ++) {
 			if(graph_vertices.get(i).vertex_id.equals(start_vertex.vertex_id)) {
@@ -182,14 +191,14 @@ public class Graph {
 	}
 
 	private void moveVertexFromWhiteToGray(Vertex current) {
-		
+
 		gray_set.add(current);
 		white_set.remove(current);
 
 	}
 
 	public void removeEdge(String vertex) {
-		
+
 		for(int i = 0; i < graph_edges.size(); i ++) {
 			if(graph_edges.get(i).start_vertex.vertex_id.equals(vertex)) {
 				graph_edges.remove(i);
@@ -197,7 +206,7 @@ public class Graph {
 				graph_edges.remove(i);
 			}
 		}
-		
+
 		for(int i = 0; i < graph_vertices.size(); i ++) {
 			for(int j = 0; j < graph_vertices.get(i).adjacent_vertices.size(); j ++) {
 				if(graph_vertices.get(i).adjacent_vertices.get(j).vertex_id.equals(vertex)) {
@@ -208,7 +217,7 @@ public class Graph {
 				graph_vertices.remove(i);
 			}
 		}
-		
+
 		HashSet<String> hs = new HashSet<String>();
 		for(Edge e: graph_edges) {
 			hs.add(e.start_vertex.vertex_id);
@@ -219,7 +228,52 @@ public class Graph {
 				graph_vertices.remove(i);
 			}
 		}
-		
+
 	}
 	
+	boolean checkDegrees() {
+		
+		HashMap<String, Integer[]> result = new HashMap<String, Integer[]>();
+		for(int i = 0; i < graph_vertices.size(); i ++) {
+			if(graph_vertices.get(i).vertex_id.substring(0, 1).equals("x")) {
+				String current_vertex = graph_vertices.get(i).vertex_id;
+				int in = 0;
+				int out = 0;
+				for(Edge e: graph_edges) {
+					if(e.end_vertex.vertex_id.equals(current_vertex)) {
+						in ++;
+					}
+					if(e.start_vertex.vertex_id.equals(current_vertex)) {
+						out ++;
+					}
+				}
+				Integer[] inout = {in, out};
+				result.put(graph_vertices.get(i).vertex_id, inout);
+			}
+		}
+				
+		for(String s: result.keySet()) {
+			if (result.get(s)[0]-result.get(s)[1]>0) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	public boolean containsMirrorEdges() {
+		
+		for(Edge e: graph_edges) {
+			String sv = e.start_vertex.vertex_id;
+			String ev = e.end_vertex.vertex_id;
+			for(Edge e1: graph_edges) {
+				if(e1.start_vertex.vertex_id.equals(ev) && e1.end_vertex.vertex_id.equals(sv)) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+
 }

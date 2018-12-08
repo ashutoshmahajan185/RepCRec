@@ -143,7 +143,6 @@ public class Transaction {
 						if (s.isSiteUp() && s.checkWriteLock(this, I.data_item - 1)) {
 							s.clearWriteLock(I.data_item - 1);
 						}
-
 					}
 				} else {
 					int site_id = 1 + I.data_item % 10;
@@ -159,7 +158,6 @@ public class Transaction {
 						if (s.isSiteUp() && s.hasReadLock(this, I.data_item - 1)) {
 							s.clearReadLock(this, I.data_item - 1);
 						}
-
 					}
 				} else {
 					int site_id = 1 + I.data_item % 10;

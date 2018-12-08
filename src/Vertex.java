@@ -6,6 +6,7 @@ public class Vertex {
 	//ArrayList<Edge> edges = new ArrayList<Edge>();
 	ArrayList<Vertex> adjacent_vertices = new ArrayList<Vertex>();
 
+	
 	Vertex(String vertex_id) {
 		this.vertex_id = vertex_id;
 	}
