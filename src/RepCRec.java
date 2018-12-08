@@ -15,7 +15,7 @@ public class RepCRec {
 
 		//System.out.println("Enter the test_script name/number");
 		// Modify the file path here
-		String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_18.txt";
+		String file_path = "E:/Ecplise/RepCRec/test_scripts/test_script_21.txt";
 		//String file_path = "../test_scripts/test_script_18.txt";
 		//String file_name = new String(args[0]);
 		//String file_path = "../test_scripts/" + file_name;

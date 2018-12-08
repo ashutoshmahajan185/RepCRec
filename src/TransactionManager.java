@@ -147,7 +147,7 @@ public class TransactionManager {
 		if(addFlagToCheckRead)
 			I.denyReadPermission();
 		if(requestWriteLock(I.data_item, I, flag, accessedSites)) {
-			System.out.println("Lock can be acquired");
+			System.out.println("Lock can be acquired" + "  T"+T.transaction_ID);
 			//System.out.println("Deadlock detection---" + I);
 			graph.reverseEdge("T" + T.transaction_ID, "x" + I.data_item);
 			//System.out.println(graph);
@@ -198,7 +198,7 @@ public class TransactionManager {
 		if (addFlagToCheckRead)
 			I.denyReadPermission();
 		if (requestReadLock(I.data_item, I, flag, accessedSites)) {
-			System.out.println("lock can be acquired");
+			System.out.println("lock can be acquired" + "  T"+T.transaction_ID);
 			graph.reverseEdge("T" + T.transaction_ID, "x" + I.data_item);
 			if (I.data_item % 2 == 0) {
 				if (!accessedSites.isEmpty()) {
@@ -396,22 +396,22 @@ public class TransactionManager {
 				System.out.println("Deadlock Detected");
 				abortTransaction(youngest_transaction);
 
-				Instruction I = waitingInstructions.pollLast();
+				Instruction I = getNextWaitingInstruction(youngest_transaction);
 				if (I != null) {
 					processInstruction(I, I.transaction_id, true);
 				}
-				getnextblocked = true;
+				//getnextblocked = true;
 				deadlock = false;
 			} else if(graph.containsMirrorEdges()) {
 				if(graph.checkDegrees()) {
 					System.out.println("Deadlock Detected");
 					abortTransaction(youngest_transaction);
 
-					Instruction I = waitingInstructions.pollLast();
+					Instruction I = getNextWaitingInstruction(youngest_transaction);
 					if (I != null) {
 						processInstruction(I, I.transaction_id, true);
 					}
-					getnextblocked = true;
+					//getnextblocked = true;
 					deadlock = false;
 				}
 			}
@@ -473,11 +473,11 @@ public class TransactionManager {
 				abortTransaction(T);
 			}
 
-			if(!getnextblocked) {
-				Instruction I = waitingInstructions.poll();
-				if (I != null) {
-					processInstruction(I, I.transaction_id, true);
-				}
+
+			Instruction I = getNextWaitingInstruction(T);
+			if (I != null) {
+				processInstruction(I, I.transaction_id, true);
+
 			}
 		}
 	}
@@ -556,18 +556,20 @@ public class TransactionManager {
 
 		return index;
 	}
-	
-	/*public Instruction getNextWaitingInstruction(Transaction T) {
-		
+
+	public Instruction getNextWaitingInstruction(Transaction T) {
+		Instruction ReturnI = null;
 		for(Instruction I: waitingInstructions) {
-			for(Instruction TI:T.Instructions) {
-				if(TI.data_item==I.data_item) {
-					
+			for (Instruction TI: T.Instructions) {
+				if (I.data_item==TI.data_item) {
+					waitingInstructions.remove(I);
+					return I;
 				}
 			}
 		}
-		
-	}*/
+		return ReturnI;
+
+	}
 
 	public void dump() {
 
